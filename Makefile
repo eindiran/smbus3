@@ -44,11 +44,18 @@ docs: doc/_build/html/index.html
 doc/_build/html/index.html: venv smbus3/smbus3.py smbus3/__init__.py doc/conf.py doc/Makefile
 	. .venv/bin/activate; cd doc && make html
 
+# Setup pre-commit
+precommit: .venv/pre-commit-touchfile
+
+.venv/pre-commit-touchfile: .pre-commit-config.yaml
+	. .venv/bin/activate; pre-commit install
+	touch .venv/pre-commit-touchfile
+
 # Lint and format:
 .PHONY: format
-format: venv
+format: venv .ruff.toml
 	. .venv/bin/activate; ruff format .
 
 .PHONY: lint
-lint: venv format
+lint: venv format .ruff.toml
 	. .venv/bin/activate; ruff check --fix .
