@@ -32,6 +32,7 @@ clean:
 	rm -rf build
 	rm -rf .ruff_cache
 	rm -rf .mypy_cache
+	rm -rf doc/_build
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 # Run the tests:
@@ -40,10 +41,13 @@ test: venv
 	. .venv/bin/activate; python -m unittest tests/test_datatypes.py; python -m unittest tests/test_smbus3.py
 
 # Build the docs:
-docs: doc/_build/html/index.html
+docs: doc/_build/html/index.html doc/_build/man/smbus3.1
 
 doc/_build/html/index.html: venv smbus3/smbus3.py smbus3/__init__.py doc/conf.py doc/Makefile
 	. .venv/bin/activate; cd doc && make html
+
+doc/_build/man/smbus3.1: venv smbus3/smbus3.py smbus3/__init__.py doc/conf.py doc/Makefile
+	. .venv/bin/activate; cd doc && make man
 
 # Setup pre-commit
 precommit: .venv/pre-commit-touchfile
