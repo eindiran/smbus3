@@ -32,6 +32,7 @@ clean:
 	rm -rf build
 	rm -rf .ruff_cache
 	rm -rf .mypy_cache
+	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 # Run the tests:
 .PHONY: test
