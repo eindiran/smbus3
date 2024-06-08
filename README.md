@@ -214,7 +214,7 @@ with SMBus(1) as bus:
 From [PyPi](https://pypi.org/) with `pip`:
 
 ```
-pip install smbus3
+pip3 install smbus3
 ```
 
 From [conda-forge](https://anaconda.org/conda-forge) using `conda`:
@@ -226,5 +226,16 @@ conda install -c conda-forge smbus3
 Installation from source code is straight forward:
 
 ```
-python setup.py install
+# Pre-3.12:
+python3 setup.py install
+# Post-3.12:
+pip3 install .
+```
+
+# Local development
+
+For local development, you can use the included `Makefile` to perform tasks:
+
+```
+make all
 ```

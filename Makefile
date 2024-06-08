@@ -11,6 +11,14 @@
 #
 #==================================================================
 
+# Help to list makefile targets:
+# This is first so that it will be the default target.
+.PHONY: help
+help: Makefile
+	@echo "Available targets:"
+	@echo "==================="
+	@LC_ALL=C $(MAKE) -pRrq -f $(firstword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/(^|\n)# Files(\n|$$)/,/(^|\n)# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | grep -E -v -e '^[^[:alnum:]]' -e '^$@$$' | grep -E -v -e "_build"
+
 # all runs clean, then creates the venv and runs tests
 .PHONY: all
 all: clean venv precommit format lint test docs
@@ -41,7 +49,11 @@ test: venv
 	. .venv/bin/activate; python -m unittest tests/test_datatypes.py; python -m unittest tests/test_smbus3.py
 
 # Build the docs:
-docs: doc/_build/html/index.html doc/_build/man/smbus3.1
+docs: docs_html docs_man_page
+
+docs_html: doc/_build/html/index.html
+
+docs_man_page: doc/_build/man/smbus3.1
 
 doc/_build/html/index.html: venv smbus3/smbus3.py smbus3/__init__.py doc/conf.py doc/Makefile
 	. .venv/bin/activate; cd doc && make html
