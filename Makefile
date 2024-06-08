@@ -19,7 +19,7 @@ all: clean venv format lint test docs
 # Tracked via a touchfile
 venv: .venv/touchfile
 
-.venv/touchfile: requirements.txt requirements_dev.txt setup.py
+.venv/touchfile: requirements_dev.txt setup.py
 	test -d .venv || python3 -m venv .venv
 	. .venv/bin/activate; pip install -Ur requirements_dev.txt; pip install -U .
 	touch .venv/touchfile
