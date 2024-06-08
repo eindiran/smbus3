@@ -13,7 +13,7 @@
 
 # all runs clean, then creates the venv and runs tests
 .PHONY: all
-all: clean venv test docs
+all: clean venv format lint test docs
 
 # venv sets up the virtualenv
 # Tracked via a touchfile
@@ -43,3 +43,12 @@ docs: doc/_build/html/index.html
 
 doc/_build/html/index.html: venv smbus3/smbus3.py smbus3/__init__.py doc/conf.py doc/Makefile
 	. .venv/bin/activate; cd doc && make html
+
+# Lint and format:
+.PHONY: format
+format: venv
+	. .venv/bin/activate; ruff format .
+
+.PHONY: lint
+lint: venv format
+	. .venv/bin/activate; ruff check --fix .
