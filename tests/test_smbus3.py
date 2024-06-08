@@ -234,5 +234,6 @@ class TestI2CMsg(SMBusTestCase):
         s = 0
         for k in range(0, msg.len):
             s += ord(msg.buf[k])
+        k += 1  # Convert to length
         self.assertEqual(k, 10, msg="Incorrect length")
         self.assertEqual(s, 55, msg="Incorrect sum")
