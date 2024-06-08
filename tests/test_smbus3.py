@@ -27,7 +27,7 @@ try:
 except ImportError:
     import mock  # noqa: F401
 
-from smbus2 import SMBus, i2c_msg, I2cFunc
+from smbus3 import SMBus, i2c_msg, I2cFunc
 
 
 ##########################################################################
@@ -103,9 +103,9 @@ def mock_ioctl(fd, command, msg):
 
 
 # Override open, close and ioctl with our mock functions
-open_mock = mock.patch('smbus2.smbus2.os.open', mock_open)
-close_mock = mock.patch('smbus2.smbus2.os.close', mock_close)
-ioctl_mock = mock.patch('smbus2.smbus2.ioctl', mock_ioctl)
+open_mock = mock.patch('smbus3.smbus3.os.open', mock_open)
+close_mock = mock.patch('smbus3.smbus3.os.close', mock_close)
+ioctl_mock = mock.patch('smbus3.smbus3.ioctl', mock_ioctl)
 ##########################################################################
 
 # Common error messages

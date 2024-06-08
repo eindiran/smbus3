@@ -1,4 +1,4 @@
-"""smbus2 - A drop-in replacement for smbus-cffi/smbus-python"""
+"""smbus3 - A drop-in replacement for smbus-cffi/smbus-python"""
 # The MIT License (MIT)
 # Copyright (c) 2020 Karl-Petter Lindegaard
 #
@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .smbus2 import SMBus, i2c_msg, I2cFunc  # noqa: F401
+from .smbus3 import SMBus, i2c_msg, I2cFunc  # noqa: F401
 
 __version__ = "0.4.3"
 __all__ = ["SMBus", "i2c_msg", "I2cFunc"]

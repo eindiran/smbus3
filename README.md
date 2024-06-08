@@ -1,9 +1,9 @@
-# smbus2
+# smbus3
 A drop-in replacement for smbus-cffi/smbus-python in pure Python
 
-[![Build Status](https://github.com/kplindegaard/smbus2/actions/workflows/python-build-test.yml/badge.svg?branch=master)](https://github.com/kplindegaard/smbus2/actions/workflows/python-build-test.yml)
+[![Build Status](https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml/badge.svg?branch=master)](https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml)
 [![Documentation Status](https://readthedocs.org/projects/smbus2/badge/?version=latest)](http://smbus2.readthedocs.io/en/latest/?badge=latest)
-![CodeQL](https://github.com/kplindegaard/smbus2/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
+![CodeQL](https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kplindegaard_smbus2&metric=alert_status)](https://sonarcloud.io/dashboard?id=kplindegaard_smbus2)
 
 ![Python Verions](https://img.shields.io/pypi/pyversions/smbus2.svg)
@@ -12,7 +12,7 @@ A drop-in replacement for smbus-cffi/smbus-python in pure Python
 
 # Introduction
 
-smbus2 is (yet another) pure Python implementation of the [python-smbus](http://www.lm-sensors.org/browser/i2c-tools/trunk/py-smbus/) package.
+smbus3 is (yet another) pure Python implementation of the [python-smbus](http://www.lm-sensors.org/browser/i2c-tools/trunk/py-smbus/) package.
 
 It was designed from the ground up with two goals in mind:
 
@@ -42,16 +42,16 @@ Currently supported features are:
 
 It is developed on Python 2.7 but works without any modifications in Python 3.X too.
 
-More information about updates and general changes are recorded in the [change log](https://github.com/kplindegaard/smbus2/blob/master/CHANGELOG.md).
+More information about updates and general changes are recorded in the [change log](https://github.com/eindiran/smbus3/blob/master/CHANGELOG.md).
 
 # SMBus code examples
 
-smbus2 installs next to smbus as the package, so it's not really a 100% replacement. You must change the module name.
+smbus3 installs next to smbus as the package, so it's not really a 100% replacement. You must change the module name.
 
 ## Example 1a: Read a byte
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 # Open i2c bus 1 and read one byte from address 80, offset 0
 bus = SMBus(1)
@@ -65,7 +65,7 @@ bus.close()
 This is the very same example but safer to use since the smbus will be closed automatically when exiting the with block.
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     b = bus.read_byte_data(80, 0)
@@ -77,7 +77,7 @@ with SMBus(1) as bus:
 Same example with Packet Error Checking enabled.
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     bus.pec = 1  # Enable PEC
@@ -90,7 +90,7 @@ with SMBus(1) as bus:
 You can read up to 32 bytes at once.
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     # Read a block of 16 bytes from address 80, offset 0
@@ -102,7 +102,7 @@ with SMBus(1) as bus:
 ## Example 3: Write a byte
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     # Write a byte to address 80, offset 0
@@ -115,7 +115,7 @@ with SMBus(1) as bus:
 It is possible to write 32 bytes at the time, but I have found that error-prone. Write less and add a delay in between if you run into trouble.
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     # Write a block of 8 bytes to address 80 from offset 0
@@ -125,7 +125,7 @@ with SMBus(1) as bus:
 
 # I2C
 
-Starting with v0.2, the smbus2 library also has support for combined read and write transactions. *i2c_rdwr* is not really a SMBus feature but comes in handy when the master needs to:
+Starting with v0.2, the smbus3 library also has support for combined read and write transactions. *i2c_rdwr* is not really a SMBus feature but comes in handy when the master needs to:
 
 1. read or write bulks of data larger than SMBus' 32 bytes limit.
 1. write some data and then read from the slave with a repeated start and no stop bit between.
@@ -136,7 +136,7 @@ Each operation is represented by a *i2c_msg* message object.
 ## Example 5: Single i2c_rdwr
 
 ```python
-from smbus2 import SMBus, i2c_msg
+from smbus3 import SMBus, i2c_msg
 
 with SMBus(1) as bus:
     # Read 64 bytes from address 80
@@ -157,7 +157,7 @@ with SMBus(1) as bus:
 To perform dual operations just add more i2c_msg instances to the bus call:
 
 ```python
-from smbus2 import SMBus, i2c_msg
+from smbus3 import SMBus, i2c_msg
 
 # Single transaction writing two bytes then read two at address 80
 write = i2c_msg.write(80, [40, 50])
@@ -188,7 +188,7 @@ for k in range(msg.len):
 ## Example 8: Single i2c_rd
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     # Read 64 bytes from address 80
@@ -198,7 +198,7 @@ with SMBus(1) as bus:
 ## Example 9: Single i2c_wr
 
 ```python
-from smbus2 import SMBus
+from smbus3 import SMBus
 
 with SMBus(1) as bus:
     # Write a single byte to address 80
@@ -213,13 +213,13 @@ with SMBus(1) as bus:
 From [PyPi](https://pypi.org/) with `pip`:
 
 ```
-pip install smbus2
+pip install smbus3
 ```
 
 From [conda-forge](https://anaconda.org/conda-forge) using `conda`:
 
 ```
-conda install -c conda-forge smbus2
+conda install -c conda-forge smbus3
 ```
 
 Installation from source code is straight forward:

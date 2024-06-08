@@ -3,7 +3,7 @@
 # The MIT License (MIT)
 # Copyright (c) 2020 Karl-Petter Lindegaard
 #
-# smbus2 documentation build configuration file.
+# smbus3 documentation build configuration file.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -23,7 +23,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-from smbus2 import __version__  # noqa: E402
+from smbus3 import __version__  # noqa: E402
 
 
 # -- General configuration ------------------------------------------------
@@ -50,7 +50,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "smbus2"
+project = "smbus3"
 doc_title = "{} Documentation".format(project)
 author = "Karl-Petter Lindegaard"
 copyright = "2017-2024, {}".format(author)
@@ -125,7 +125,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "smbus2doc"
+htmlhelp_basename = "smbus3doc"
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -149,7 +149,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "smbus2.tex", doc_title, author, "manual"),
+    (master_doc, "smbus3.tex", doc_title, author, "manual"),
 ]
 
 # -- Options for manual page output ---------------------------------------

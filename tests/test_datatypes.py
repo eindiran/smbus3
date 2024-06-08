@@ -19,13 +19,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from smbus2.smbus2 import i2c_smbus_ioctl_data, union_i2c_smbus_data, i2c_msg, i2c_rdwr_ioctl_data  # noqa: F401
-from smbus2.smbus2 import I2C_SMBUS_BLOCK_MAX, I2C_SMBUS_READ, I2C_SMBUS_BYTE_DATA
 import unittest
+
+from smbus3.smbus3 import (  # noqa: F401
+    I2C_SMBUS_BLOCK_MAX,
+    I2C_SMBUS_BYTE_DATA,
+    I2C_SMBUS_READ,
+    i2c_msg,
+    i2c_rdwr_ioctl_data,
+    i2c_smbus_ioctl_data,
+    union_i2c_smbus_data,
+)
 
 
 class TestDataTypes(unittest.TestCase):
-
     def test_union_i2c_smbus_data(self):
         u = union_i2c_smbus_data()
 
@@ -75,14 +82,14 @@ class TestDataTypes(unittest.TestCase):
         self.assertEqual(msg.flags, 0)
         self.assertListEqual(buf, list(msg))
         # Create from str
-        s = "ABCD\x01\n\xFF"
+        s = "ABCD\x01\n\xff"
         msg2 = i2c_msg.write(81, s)
         self.assertEqual(msg2.addr, msg.addr)
         self.assertEqual(msg2.len, msg.len)
         self.assertEqual(msg2.flags, msg.flags)
         self.assertListEqual(list(msg), list(msg2))
         self.assertEqual(str(msg2), "ABCD\x01\n")
-        self.assertGreaterEqual(('%r' % msg2).find(r"ABCD\x01\n\xff"), 0)
+        self.assertGreaterEqual(("%r" % msg2).find(r"ABCD\x01\n\xff"), 0)
 
     def test_i2c_msg_iter(self):
         buf = [10, 11, 12, 13]
