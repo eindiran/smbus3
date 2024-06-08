@@ -3,7 +3,7 @@ A drop-in replacement for smbus2, smbus-cffi, or smbus-python written in pure Py
 
 This library was originally forked from @kplindegaard's excellent [smbus2](https://github.com/kplindegaard/smbus2). If you need a package that works with Python 2.7 - 3.8, smbus2 is the way to go.
 
-[![Build Status](https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml/badge.svg?branch=master)](https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml)
+[![Build Status](https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master)](https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml)
 [![Documentation Status](https://readthedocs.org/projects/smbus2/badge/?version=latest)](http://smbus2.readthedocs.io/en/latest/?badge=latest)
 ![CodeQL](https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kplindegaard_smbus2&metric=alert_status)](https://sonarcloud.io/dashboard?id=kplindegaard_smbus2)
