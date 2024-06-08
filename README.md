@@ -1,11 +1,12 @@
 # smbus3
-A drop-in replacement for smbus-cffi/smbus-python in pure Python
+A drop-in replacement for smbus2, smbus-cffi, or smbus-python written in pure Python and intended for use with Python 3.9+.
+
+This library was originally forked from @kplindegaard's excellent [smbus2](https://github.com/kplindegaard/smbus2). If you need a package that works with Python 2.7 - 3.8, smbus2 is the way to go.
 
 [![Build Status](https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml/badge.svg?branch=master)](https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml)
 [![Documentation Status](https://readthedocs.org/projects/smbus2/badge/?version=latest)](http://smbus2.readthedocs.io/en/latest/?badge=latest)
 ![CodeQL](https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kplindegaard_smbus2&metric=alert_status)](https://sonarcloud.io/dashboard?id=kplindegaard_smbus2)
-
 ![Python Verions](https://img.shields.io/pypi/pyversions/smbus2.svg)
 [![PyPi Version](https://img.shields.io/pypi/v/smbus2.svg)](https://pypi.org/project/smbus2/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/smbus2)](https://pypi.org/project/smbus2/)
@@ -40,7 +41,7 @@ Currently supported features are:
 * `i2c_rd()` - single read via `i2c_rdwr`
 * `i2c_wr()` - single write via `i2c_rdwr`
 
-It is developed on Python 2.7 but works without any modifications in Python 3.X too.
+It is developed for Python 3.9+.
 
 More information about updates and general changes are recorded in the [change log](https://github.com/eindiran/smbus3/blob/master/CHANGELOG.md).
 

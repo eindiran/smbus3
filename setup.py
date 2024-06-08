@@ -1,11 +1,8 @@
-# The MIT License (MIT)
-# Copyright (c) 2017 Karl-Petter Lindegaard
-
 import builtins
 import os
 import re
 
-from setuptools import setup
+from setuptools import setup  # type: ignore
 
 
 def read_file(fname, encoding="utf-8"):
@@ -19,22 +16,25 @@ def find_version(*file_paths):
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
-
     err_msg = f"Unable to find version string in {fpath}"
     raise RuntimeError(err_msg)
 
 
 README = read_file("README.md")
 version = find_version("smbus3", "__init__.py")
+description = (
+    "smbus3 is a drop-in replacement for smbus2, smbus-cffi, smbus-python "
+    + "written in pure Python, intended for use with Python 3.9+"
+)
 
 setup(
     name="smbus3",
     version=version,
-    author="Karl-Petter Lindegaard",
-    author_email="kp.lindegaard@gmail.com",
-    description="smbus3 is a drop-in replacement for smbus-cffi/smbus-python in pure Python",
+    author="Elliott Indiran",
+    author_email="elliott.indiran@protonmail.com",
+    description=description,
     license="MIT",
-    keywords=["smbus", "smbus3", "python", "i2c", "raspberrypi", "linux"],
+    keywords=["smbus", "smbus2", "smbus3", "python", "i2c", "raspberrypi", "linux"],
     url="https://github.com/eindiran/smbus3",
     packages=["smbus3"],
     package_data={"smbus3": ["py.typed", "smbus3.pyi"]},
