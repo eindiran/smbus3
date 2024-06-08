@@ -52,9 +52,6 @@ class I2cFunc(IntFlag):
     These flags identify the operations supported by an I2C/SMBus device.
 
     You can test these flags on your `smbus.funcs`
-
-    On newer python versions, I2cFunc is an IntFlag enum, but it
-    falls back to class with a bunch of int constants on older releases.
     """
 
     I2C = 0x00000001
