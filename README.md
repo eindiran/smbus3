@@ -237,5 +237,22 @@ pip3 install .
 For local development, you can use the included `Makefile` to perform tasks:
 
 ```
+# EG:
 make all
+# To show available commands, you can use:
+make help
+# Or alternatively bare make:
+make
 ```
+
+Currently available targets:
+ - all
+ - clean
+ - docs
+ - docs_html
+ - docs_man_page
+ - format
+ - lint
+ - precommit
+ - test
+ - venv
