@@ -41,6 +41,8 @@ clean:
 	rm -rf .ruff_cache
 	rm -rf .mypy_cache
 	rm -rf doc/_build
+	rm -rf doc/doctrees
+	rm -rf doc/man
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 # Run the tests:

@@ -28,3 +28,4 @@ jobs:
         run: |
           cd doc
           sphinx-build -W -b html -d ./doctrees . ./html
+          sphinx-build -W -b man -d ./doctrees . ./man
