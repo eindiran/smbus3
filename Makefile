@@ -13,7 +13,7 @@
 
 # all runs clean, then creates the venv and runs tests
 .PHONY: all
-all: clean venv format lint test docs
+all: clean venv precommit format lint test docs
 
 # venv sets up the virtualenv
 # Tracked via a touchfile
