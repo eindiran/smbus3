@@ -21,27 +21,23 @@
 # SOFTWARE.
 
 import os
-import sys
-from fcntl import ioctl
 from ctypes import (
-    c_uint32,
+    POINTER,
+    Array,
+    Structure,
+    Union,
+    c_char,
     c_uint8,
     c_uint16,
-    c_char,
-    POINTER,
-    Structure,
-    Array,
-    Union,
+    c_uint32,
     create_string_buffer,
     string_at,
 )
-
+from fcntl import ioctl
 
 # Commands from uapi/linux/i2c-dev.h
 I2C_SLAVE = 0x0703  # Use this slave address
-I2C_SLAVE_FORCE = (
-    0x0706  # Use this slave address, even if it is already in use by a driver!
-)
+I2C_SLAVE_FORCE = 0x0706  # Use this slave address, even if it is already in use by a driver!
 I2C_FUNCS = 0x0705  # Get the adapter functionality mask
 I2C_RDWR = 0x0707  # Combined R/W transfer (one STOP only)
 I2C_SMBUS = 0x0720  # SMBus transfer. Takes pointer to i2c_smbus_ioctl_data
@@ -57,18 +53,16 @@ I2C_SMBUS_BYTE = 1
 I2C_SMBUS_BYTE_DATA = 2
 I2C_SMBUS_WORD_DATA = 3
 I2C_SMBUS_PROC_CALL = 4
-I2C_SMBUS_BLOCK_DATA = 5  # This isn't supported by Pure-I2C drivers with SMBUS emulation, like those in RaspberryPi, OrangePi, etc :(
-I2C_SMBUS_BLOCK_PROC_CALL = (
-    7  # Like I2C_SMBUS_BLOCK_DATA, it isn't supported by Pure-I2C drivers either.
-)
+I2C_SMBUS_BLOCK_DATA = 5
+# NOTE: I2c_SMBUS_BLOCK_DATA isn't supported by Pure-I2C drivers with
+# SMBUS emulation, like those in RaspberryPi, OrangePi, etc.
+I2C_SMBUS_BLOCK_PROC_CALL = 7
+# Like I2C_SMBUS_BLOCK_DATA, it isn't supported by Pure-I2C drivers either.
 I2C_SMBUS_I2C_BLOCK_DATA = 8
 I2C_SMBUS_BLOCK_MAX = 32
 
 # To determine what functionality is present (uapi/linux/i2c.h)
-try:
-    from enum import IntFlag
-except ImportError:
-    IntFlag = int
+from enum import IntFlag
 
 
 class I2cFunc(IntFlag):
@@ -135,6 +129,10 @@ class i2c_smbus_data(Array):
 
 
 class union_i2c_smbus_data(Union):
+    """
+    C union for representing i2c smbus data.
+    """
+
     _fields_ = [("byte", c_uint8), ("word", c_uint16), ("block", i2c_smbus_data)]
 
 
@@ -156,6 +154,9 @@ class i2c_smbus_ioctl_data(Structure):
 
     @staticmethod
     def create(read_write=I2C_SMBUS_READ, command=0, size=I2C_SMBUS_BYTE_DATA):
+        """
+        Create a new i2c_smbus_ioctl_data struct.
+        """
         u = union_i2c_smbus_data()
         return i2c_smbus_ioctl_data(
             read_write=read_write,
@@ -250,14 +251,10 @@ class i2c_msg(Structure):
         :return: New :py:class:`i2c_msg` instance for write operation.
         :rtype: :py:class:`i2c_msg`
         """
-        if sys.version_info.major >= 3:
-            if type(buf) is str:
-                buf = bytes(map(ord, buf))
-            else:
-                buf = bytes(buf)
+        if isinstance(buf, str):
+            buf = bytes(map(ord, buf))
         else:
-            if type(buf) is not str:
-                buf = "".join([chr(x) for x in buf])
+            buf = bytes(buf)
         arr = create_string_buffer(buf, len(buf))
         return i2c_msg(addr=address, flags=0, len=len(arr), buf=arr)
 
@@ -292,7 +289,7 @@ class i2c_rdwr_ioctl_data(Structure):
 #############################################################
 
 
-class SMBus(object):
+class SMBus:
     """
     The main SMBus class.
     """
@@ -337,11 +334,11 @@ class SMBus(object):
         :rtype: None
         """
         if isinstance(bus, int):
-            filepath = "/dev/i2c-{}".format(bus)
+            filepath = f"/dev/i2c-{bus}"
         elif isinstance(bus, str):
             filepath = bus
         else:
-            raise TypeError("Unexpected type(bus)={}".format(type(bus)))
+            raise TypeError(f"Unexpected type(bus)={type(bus)}")
 
         self.fd = os.open(filepath, os.O_RDWR)
         self.funcs = self._get_funcs()
@@ -373,7 +370,7 @@ class SMBus(object):
         :rtype: None
         """
         if not (self.funcs & I2cFunc.SMBUS_PEC):
-            raise IOError("SMBUS_PEC is not a feature")
+            raise OSError("SMBUS_PEC is not a feature")
         self._pec = int(enable)
         ioctl(self.fd, I2C_PEC, self._pec)
 
@@ -441,9 +438,7 @@ class SMBus(object):
         :rtype: int
         """
         self._set_address(i2c_addr, force=force)
-        msg = i2c_smbus_ioctl_data.create(
-            read_write=I2C_SMBUS_READ, command=0, size=I2C_SMBUS_BYTE
-        )
+        msg = i2c_smbus_ioctl_data.create(read_write=I2C_SMBUS_READ, command=0, size=I2C_SMBUS_BYTE)
         ioctl(self.fd, I2C_SMBUS, msg)
         return msg.data.contents.byte
 

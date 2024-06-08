@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # The MIT License (MIT)
 # Copyright (c) 2020 Karl-Petter Lindegaard
 #
@@ -23,8 +22,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(".."))
 
-from smbus3 import __version__  # noqa: E402
-
+from smbus3 import __version__
 
 # -- General configuration ------------------------------------------------
 
@@ -51,9 +49,9 @@ master_doc = "index"
 
 # General information about the project.
 project = "smbus3"
-doc_title = "{} Documentation".format(project)
+doc_title = f"{project} Documentation"
 author = "Karl-Petter Lindegaard"
-copyright = "2017-2024, {}".format(author)
+copyright = f"2017-2024, {author}"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
