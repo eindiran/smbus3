@@ -29,7 +29,7 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
     - name: Additional install for Python 3.12 or higher
-      if: ${{ matrix.python-version >= "3.12" }}
+      if: ${{ matrix.python-version >= '3.12' }}
       run: |
         pip install setuptools
     - name: Install smbus3
