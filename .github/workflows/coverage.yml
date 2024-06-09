@@ -10,6 +10,11 @@ jobs:
           fail-fast: true
           matrix:
             python-version: ["3.12"]
+        permissions:
+          # Gives the action the necessary permissions for publishing new
+          # comments in pull requests.
+          pull-requests: write
+          contents: write
         steps:
           - uses: actions/checkout@v4
           - name: Set up Python ${{ matrix.python-version }}
