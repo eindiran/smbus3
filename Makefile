@@ -44,6 +44,7 @@ clean:
 	rm -rf doc/doctrees
 	rm -rf doc/man
 	rm -rf .coverage
+	rm -rf coverage.xml
 	rm -rf htmlcov
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
