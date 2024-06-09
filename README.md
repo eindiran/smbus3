@@ -6,7 +6,7 @@ This library was forked from @kplindegaard's excellent [smbus2](https://github.c
 [![Build Status](https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master)](https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml)
 ![CodeQL](https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
 
-# Introduction
+## Introduction
 
 smbus3 is (yet another) pure Python implementation of the [python-smbus](http://www.lm-sensors.org/browser/i2c-tools/trunk/py-smbus/) package.
 
@@ -19,6 +19,7 @@ Currently supported features are:
 
 * Get i2c capabilities (`I2C_FUNCS`)
 * SMBus Packet Error Checking (PEC) support
+* 10bit addressing support
 * `read_byte()`
 * `write_byte()`
 * `read_byte_data()`
@@ -44,11 +45,11 @@ More information about updates and general changes are recorded in the [change l
 
 OSes leveraging the Linux kernel are the primary testbed for the library, but if you try it out on *BSD and find a bug or problem, please open an issue.
 
-# SMBus code examples
+## SMBus code examples
 
-smbus3 installs next to smbus as the package, so it's not really a 100% replacement. You must change the module name.
+smbus3 installs next to smbus / smbus2 as the package, so it's not really a 100% replacement. You must change the module name.
 
-## Example 1a: Read a byte
+### Example 1a: Read a byte
 
 ```python
 from smbus3 import SMBus
@@ -60,9 +61,9 @@ print(b)
 bus.close()
 ```
 
-## Example 1b: Read a byte using 'with'
+### Example 1b: Read a byte using `with`
 
-This is the very same example but safer to use since the smbus will be closed automatically when exiting the with block.
+This is the very same example but safer to use since the `SMBus` object will be closed automatically when exiting the `with` block.
 
 ```python
 from smbus3 import SMBus
@@ -72,7 +73,7 @@ with SMBus(1) as bus:
     print(b)
 ```
 
-## Example 1c: Read a byte with PEC enabled
+### Example 1c: Read a byte with PEC enabled
 
 Same example with Packet Error Checking enabled.
 
@@ -85,7 +86,44 @@ with SMBus(1) as bus:
     print(b)
 ```
 
-## Example 2: Read a block of data
+### Example 1d: Read a byte with 10bit addressing enabled
+
+```python
+from smbus3 import SMBus
+
+with SMBus(1) as bus:
+    bus.tenbit = 1  # Enable 10bit addressing
+    b = bus.read_byte_data(80, 0)
+    print(b)
+```
+
+### Example 1e: Read a byte with manually specified timeout
+
+Timeout can be specified in units of 10ms:
+
+```python
+from smbus3 import SMBus
+
+with SMBus(1) as bus:
+    bus.set_timeout(30) # Specify a timeout of 300ms
+    b = bus.read_byte_data(80, 0)
+    print(b)
+```
+
+### Example 1f: Read a byte with manually specified retries
+
+Retries can be specified using `set_retries()`:
+
+```python
+from smbus3 import SMBus
+
+with SMBus(1) as bus:
+    bus.set_retries(5) # Retry up to 5 times
+    b = bus.read_byte_data(80, 0)
+    print(b)
+```
+
+### Example 2: Read a block of data
 
 You can read up to 32 bytes at once.
 
@@ -99,20 +137,26 @@ with SMBus(1) as bus:
     print(block)
 ```
 
-## Example 3: Write a byte
+### Example 3: Write a byte
 
 ```python
 from smbus3 import SMBus
 
 with SMBus(1) as bus:
-    # Write a byte to address 80, offset 0
+    # Write 3 bytes to address 80, offset 0:
     data = 45
+    bus.write_byte_data(80, 0, data)
+    data = 0x1F
+    bus.write_byte_data(80, 0, data)
+    data = b"\x00"
     bus.write_byte_data(80, 0, data)
 ```
 
-## Example 4: Write a block of data
+### Example 4: Write a block of data
 
-It is possible to write 32 bytes at the time, but I have found that error-prone. Write less and add a delay in between if you run into trouble.
+It is possible to write 32 bytes at the time, but that may be error-prone on some platforms.
+
+Write fewer bytes and add a delay in between if you run into trouble.
 
 ```python
 from smbus3 import SMBus
@@ -121,19 +165,31 @@ with SMBus(1) as bus:
     # Write a block of 8 bytes to address 80 from offset 0
     data = [1, 2, 3, 4, 5, 6, 7, 8]
     bus.write_i2c_block_data(80, 0, data)
+
+with SMBus(1) as bus:
+    # Write a block of the maximum size (32 bytes) to address 80 from offset 0:
+    data = [_ for _ in range(1, 32 + 1)]
+    bus.write_i2c_block_data(80, 0, data)
+
+with SMBus(1) as bus:
+    # THIS WILL FAIL WITH ValueError, AS IT EXCEEDS I2C_SMBUS_BLOCK_MAX!
+    data = [_ for _ in range(1, 33 + 1)]
+    bus.write_i2c_block_data(80, 0, data)
 ```
 
-# I2C
+## I2C
 
-Starting with v0.2, the smbus3 library also has support for combined read and write transactions. *i2c_rdwr* is not really a SMBus feature but comes in handy when the master needs to:
+The smbus3 library also has support for combined read and write transactions. `i2c_rdwr` is not really a SMBus feature but comes in handy when the master needs to:
 
-1. read or write bulks of data larger than SMBus' 32 bytes limit.
-1. write some data and then read from the slave with a repeated start and no stop bit between.
+1. Read or write bulks of data larger than SMBus' 32 bytes limit.
+2. Write some data and then read from the slave with a repeated start and no stop bit between.
 
-Each operation is represented by a *i2c_msg* message object.
+Each operation is represented by a `i2c_msg` message object.
 
 
-## Example 5: Single i2c_rdwr
+### Example 5: Single `i2c_rdwr`
+
+To perform a single read or write, simply create a message using `i2c_msg.read()` or `i2c_msg.write()`, then pass the message to the `i2c_rdwr()` method on the bus:
 
 ```python
 from smbus3 import SMBus, i2c_msg
@@ -152,9 +208,9 @@ with SMBus(1) as bus:
     bus.i2c_rdwr(msg)
 ```
 
-## Example 6: Dual i2c_rdwr
+### Example 6: Dual `i2c_rdwr`
 
-To perform dual operations just add more i2c_msg instances to the bus call:
+To perform dual operations just add more `i2c_msg` instances to the bus call:
 
 ```python
 from smbus3 import SMBus, i2c_msg
@@ -166,9 +222,36 @@ with SMBus(1) as bus:
     bus.i2c_rdwr(write, read)
 ```
 
-## Example 7: Access i2c_msg data
+### Example 7: Single `i2c_rd`
 
-All data is contained in the i2c_msg instances. Here are some data access alternatives.
+To perform a single read (combining `i2c_msg` creation and calling `i2c_rdwr` on a single message into a single method call):
+
+```python
+from smbus3 import SMBus
+
+with SMBus(1) as bus:
+    # Read 64 bytes from address 80
+    bus.i2c_rd(80, 64)
+```
+
+### Example 8: Single `i2c_wr`
+
+To perform a single write (combining `i2c_msg` creation and calling `i2c_rdwr` on a single message into a single function call):
+
+```python
+from smbus3 import SMBus
+
+with SMBus(1) as bus:
+    # Write a single byte to address 80
+    bus.i2c_wr(80, [65])
+
+    # Write some bytes to address 80
+    bus.i2c_wr(80, [65, 66, 67, 68])
+```
+
+### Example 9: Access `i2c_msg` data
+
+All data is contained in the `i2c_msg` instances. Here are some data access alternatives.
 
 ```python
 # 1: Convert message content to list
@@ -185,30 +268,7 @@ for k in range(msg.len):
     print(msg.buf[k])
 ```
 
-## Example 8: Single i2c_rd
-
-```python
-from smbus3 import SMBus
-
-with SMBus(1) as bus:
-    # Read 64 bytes from address 80
-    bus.i2c_rd(80, 64)
-```
-
-## Example 9: Single i2c_wr
-
-```python
-from smbus3 import SMBus
-
-with SMBus(1) as bus:
-    # Write a single byte to address 80
-    bus.i2c_wr(80, [65])
-
-    # Write some bytes to address 80
-    bus.i2c_wr(80, [65, 66, 67, 68])
-```
-
-# Installation instructions
+## Installation instructions
 
 Installation from source code is straight forward:
 
@@ -219,7 +279,7 @@ python3 setup.py install
 pip3 install .
 ```
 
-# Local development
+## Local development
 
 For local development, you can use the included `Makefile` to perform tasks:
 
@@ -249,6 +309,6 @@ Currently available targets:
   - `typecheck` - run mypy typechecking on the smbus3 library
   - `venv` - build a venv
 
-# Acknowledgements
+## Acknowledgements
 
 This project is built entirely on the foundation of the [smbus2](https://github.com/kplindegaard/smbus2) library for Python 2 & 3, written by Karl-Petter Lindegaard (@kplindegaard).
