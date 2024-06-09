@@ -1,7 +1,7 @@
 smbus3
 ======
-.. image:: https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml/badge.svg?branch=master
-   :target: https://github.com/eindiran/smbus3/actions/workflows/python-build-test.yml
+.. image:: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg
+   :target: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml
 
 .. image:: https://img.shields.io/pypi/pyversions/smbus2.svg
     :target: https://pypi.python.org/pypi/smbus2
