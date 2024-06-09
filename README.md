@@ -233,19 +233,21 @@ make
 ```
 
 Currently available targets:
-  - `all`
-  - `clean`
-  - `coverage`
-  - `coverage_html_report`
-  - `docs`
-  - `docs_html`
-  - `docs_man_page`
-  - `format`
-  - `lint`
-  - `precommit`
-  - `test`
-  - `typecheck`
-  - `venv`
+  - `all` - softclean the directory, then create the venv if it doesn't exist, and run all common development tasks (install commit hooks, lint, format, typecheck, coverage, and then build documentation).
+  - `clean` - fully clean repo dir, including artifacts and `.venv`
+  - `coverage` - generate coverage info on the CLI
+  - `coverage_html_report` - generate coverage info as an HTML document
+  - `coverage_xml_report` - generate coverage info as a XML document
+  - `docs` - generate the man page and HTML docs
+  - `docs_html` - generate the HTML docs
+  - `docs_man_page` - generate the man page
+  - `format` - format the code and tests with Ruff
+  - `lint` - lint the code and tests with Ruff
+  - `precommit` - install precommit hooks
+  - `softclean` - clean up artifacts without removing `.venv`
+  - `test` - run the unit tests
+  - `typecheck` - run mypy typechecking on the smbus3 library
+  - `venv` - build a venv
 
 # Acknowledgements
 

@@ -19,9 +19,9 @@ help: Makefile
 	@echo "==================="
 	@LC_ALL=C $(MAKE) -pRrq -f $(firstword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/(^|\n)# Files(\n|$$)/,/(^|\n)# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | grep -E -v -e '^[^[:alnum:]]' -e '^$@$$' | grep -E -v -e "_build"
 
-# all runs clean, then creates the venv and runs tests
+# all runs softclean, then creates the venv and runs tests
 .PHONY: all
-all: clean venv precommit format lint test typecheck coverage coverage_html_report docs
+all: softclean venv precommit format lint test typecheck coverage coverage_html_report docs
 
 # venv sets up the virtualenv
 # Tracked via a touchfile
@@ -32,10 +32,9 @@ venv: .venv/touchfile
 	. .venv/bin/activate; pip install -Ur requirements_dev.txt; pip install -U .
 	touch .venv/touchfile
 
-# Cleanup the venv and various build directories
-.PHONY: clean
-clean:
-	rm -rf .venv
+# Cleanup artifacts without changing venv
+.PHONY: softclean
+softclean:
 	rm -rf smbus3.egg-info
 	rm -rf build
 	rm -rf .ruff_cache
@@ -47,6 +46,11 @@ clean:
 	rm -rf coverage.xml
 	rm -rf htmlcov
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+
+# Cleanup the venv and various build directories
+.PHONY: clean
+clean: softclean
+	rm -rf .venv
 
 # Run the tests:
 .PHONY: test
@@ -65,6 +69,10 @@ coverage: test
 .PHONY: coverage_html_report
 coverage_html_report: test
 	. .venv/bin/activate; coverage html
+
+.PHONY: coverage_xml_report
+coverage_xml_report: test
+	. .venv/bin/activate; coverage xml
 
 # Build the docs:
 docs: docs_html docs_man_page
