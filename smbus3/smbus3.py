@@ -5,7 +5,6 @@ smbus3 - A drop-in replacement for smbus2/smbus-cffi/smbus-python
 import os
 from ctypes import (
     POINTER,
-    Array,
     Structure,
     Union,
     c_char,
@@ -15,15 +14,20 @@ from ctypes import (
     create_string_buffer,
     string_at,
 )
+from enum import IntFlag
 from fcntl import ioctl
 
 # Commands from uapi/linux/i2c-dev.h
+I2C_RETRIES = 0x0701  # Number of retries
+I2C_TIMEOUT = 0x0702  # Timeout
 I2C_SLAVE = 0x0703  # Use this slave address
 I2C_SLAVE_FORCE = 0x0706  # Use this slave address, even if it is already in use by a driver!
+I2C_TENBIT = 0x0704  # 0 for 7 bit addrs, != 0 for 10 bit
+# NOTE: 10-bit address support is very limited
 I2C_FUNCS = 0x0705  # Get the adapter functionality mask
 I2C_RDWR = 0x0707  # Combined R/W transfer (one STOP only)
-I2C_SMBUS = 0x0720  # SMBus transfer. Takes pointer to i2c_smbus_ioctl_data
 I2C_PEC = 0x0708  # != 0 to use PEC with SMBus
+I2C_SMBUS = 0x0720  # SMBus transfer. Takes pointer to i2c_smbus_ioctl_data
 
 # SMBus transfer read or write markers from uapi/linux/i2c.h
 I2C_SMBUS_WRITE = 0
@@ -44,7 +48,6 @@ I2C_SMBUS_I2C_BLOCK_DATA = 8
 I2C_SMBUS_BLOCK_MAX = 32
 
 # To determine what functionality is present (uapi/linux/i2c.h)
-from enum import IntFlag
 
 
 class I2cFunc(IntFlag):
@@ -85,6 +88,22 @@ class I2cFunc(IntFlag):
 
 # i2c_msg flags from uapi/linux/i2c.h
 I2C_M_RD = 0x0001
+I2C_M_WR = 0x0000
+I2C_M_TEN = 0x0010
+
+
+class I2C_M_Bitflag(IntFlag):
+    """
+    These flags identify the operations to perform with
+    a specific i2c_msg.
+    """
+
+    I2C_M_RD = 0x0001
+    I2C_M_WR = 0x0000
+    I2C_M_TEN = 0x0010
+    I2C_M_RD_TEN = I2C_M_RD ^ I2C_M_TEN
+    I2C_M_WR_TEN = I2C_M_WR ^ I2C_M_TEN
+
 
 # Pointer definitions
 LP_c_uint8 = POINTER(c_uint8)
@@ -92,19 +111,14 @@ LP_c_uint16 = POINTER(c_uint16)
 LP_c_uint32 = POINTER(c_uint32)
 
 
-#############################################################
-# Type definitions as in i2c.h
+i2c_smbus_data = c_uint8 * (I2C_SMBUS_BLOCK_MAX + 2)
+"""
+Adaptation of the i2c_smbus_data union in ``i2c.h``.
+Data for SMBus messages.
 
-
-class i2c_smbus_data(Array):
-    """
-    Adaptation of the i2c_smbus_data union in ``i2c.h``.
-
-    Data for SMBus messages.
-    """
-
-    _length_ = I2C_SMBUS_BLOCK_MAX + 2
-    _type_ = c_uint8
+Add two additional blocks, one for length, one for user-space
+compatibility.
+"""
 
 
 class union_i2c_smbus_data(Union):
@@ -143,10 +157,6 @@ class i2c_smbus_ioctl_data(Structure):
             size=size,
             data=union_pointer_type(u),
         )
-
-
-#############################################################
-# Type definitions for i2c_rdwr combined transactions
 
 
 class i2c_msg(Structure):
@@ -204,7 +214,7 @@ class i2c_msg(Structure):
         return s
 
     @staticmethod
-    def read(address, length):
+    def read(address, length, flags=I2C_M_RD):
         """
         Prepares an i2c read transaction.
 
@@ -212,14 +222,16 @@ class i2c_msg(Structure):
         :type: address: int
         :param length: Number of bytes to read.
         :type: length: int
+        :param flags: bitflags to pass (default: I2C_M_RD)
+        :type flags: int
         :return: New :py:class:`i2c_msg` instance for read operation.
         :rtype: :py:class:`i2c_msg`
         """
         arr = create_string_buffer(length)
-        return i2c_msg(addr=address, flags=I2C_M_RD, len=length, buf=arr)
+        return i2c_msg(addr=address, flags=flags, len=length, buf=arr)
 
     @staticmethod
-    def write(address, buf):
+    def write(address, buf, flags=I2C_M_WR):
         """
         Prepares an i2c write transaction.
 
@@ -227,6 +239,8 @@ class i2c_msg(Structure):
         :type address: int
         :param buf: Bytes to write. Either list of values or str.
         :type buf: list
+        :param flags: bitflags to pass (default: I2C_M_WR)
+        :type flags: int
         :return: New :py:class:`i2c_msg` instance for write operation.
         :rtype: :py:class:`i2c_msg`
         """
@@ -235,7 +249,7 @@ class i2c_msg(Structure):
         else:
             buf = bytes(buf)
         arr = create_string_buffer(buf, len(buf))
-        return i2c_msg(addr=address, flags=0, len=len(arr), buf=arr)
+        return i2c_msg(addr=address, flags=flags, len=len(arr), buf=arr)
 
 
 class i2c_rdwr_ioctl_data(Structure):
@@ -265,9 +279,6 @@ class i2c_rdwr_ioctl_data(Structure):
         return i2c_rdwr_ioctl_data(msgs=msg_array, nmsgs=n_msg)
 
 
-#############################################################
-
-
 class SMBus:
     """
     The main SMBus class.
@@ -293,6 +304,7 @@ class SMBus:
         self.force = force
         self._force_last = None
         self._pec = 0
+        self._tenbit = 0
 
     def __enter__(self):
         """Enter handler."""
@@ -333,6 +345,7 @@ class SMBus:
             os.close(self.fd)
             self.fd = None
             self._pec = 0
+            self._tenbit = 0
             self.address = None
             self._force_last = None
 
@@ -343,7 +356,7 @@ class SMBus:
         """
         Enable/Disable PEC (Packet Error Checking) - SMBus 1.1 and later
 
-        :param enable:
+        :param enable: Whether to enable PEC or not.
         :type enable: bool
         :raise IOError: if SMBUS_PEC is not supported.
         :rtype: None
@@ -355,6 +368,60 @@ class SMBus:
 
     pec = property(_get_pec, enable_pec)  # Drop-in replacement for smbus member "pec"
     """Get and set SMBus PEC. 0 = disabled (default), 1 = enabled."""
+
+    def _get_tenbit(self):
+        return self._tenbit
+
+    def enable_tenbit(self, enable=True):
+        """
+        Enable 10 bit addresses if they are supported.
+
+        :param enable: Whether to enable 10bit addresses or not.
+        :type enable: bool
+        :raise IOError: if ADDR_10BIT is not supported.
+        :rtype: None
+        """
+        if not (self.funcs & I2cFunc.ADDR_10BIT):
+            raise OSError("ADDR_10BIT is not a feature")
+        self._tenbit = int(enable)
+        ioctl(self.fd, I2C_TENBIT, self._tenbit)
+
+    tenbit = property(_get_tenbit, enable_tenbit)
+    """Get and set 10bit addressing. 0 = disabled (default), 1 = enabled."""
+
+    def _get_timeout(self):
+        return self._timeout
+
+    def set_timeout(self, timeout):
+        """
+        Set the timeout in units of 10ms.
+
+        :param timeout: timeout as positive int in units of 10ms.
+        :type timeout: int
+        :rtype: None
+        """
+        self._timeout = timeout
+        ioctl(self.fd, I2C_TIMEOUT, self._timeout)
+
+    timeout = property(_get_timeout, set_timeout)
+    """Get and set I2C timeout in units of 10ms."""
+
+    def _get_retries(self):
+        return self._retries
+
+    def set_retries(self, retries):
+        """
+        Set the retries.
+
+        :param retries: retries as positive int.
+        :type retries: int
+        :rtype: None
+        """
+        self._retries = retries
+        ioctl(self.fd, I2C_RETRIES, self._retries)
+
+    retries = property(_get_retries, set_retries)
+    """Get and set I2C retries."""
 
     def _set_address(self, address, force=None):
         """
@@ -687,7 +754,7 @@ class SMBus:
         ioctl_data = i2c_rdwr_ioctl_data.create(*i2c_msgs)
         ioctl(self.fd, I2C_RDWR, ioctl_data)
 
-    def i2c_rd(self, i2c_addr, length):
+    def i2c_rd(self, i2c_addr, length, flags=I2C_M_RD):
         """
         Perform a single i2c read operation, given an i2c_addr and length.
 
@@ -695,13 +762,15 @@ class SMBus:
         :type i2c_addr: int
         :param length: length of read.
         :type length: int
-        :rtype: list
+        :param flags: bitflags to pass (default: I2C_M_RD)
+        :type flags: int
+        :rtype: i2c_msg
         """
-        msg = i2c_msg.read(i2c_addr, length)
+        msg = i2c_msg.read(i2c_addr, length, flags=flags)
         self.i2c_rdwr(msg)
-        return list(msg)
+        return msg
 
-    def i2c_wr(self, i2c_addr, buf):
+    def i2c_wr(self, i2c_addr, buf, flags=I2C_M_WR):
         """
         Perform a single i2c write operation, given an i2c_addr and a
         buffer to copy.
@@ -710,7 +779,10 @@ class SMBus:
         :type i2c_addr: int
         :param buf: buffer to write.
         :type buf: list
-        :rtype: None
+        :param flags: bitflags to pass (default: I2C_M_WR)
+        :type flags: int
+        :rtype: i2c_msg
         """
-        msg = i2c_msg.write(i2c_addr, buf)
+        msg = i2c_msg.write(i2c_addr, buf, flags=flags)
         self.i2c_rdwr(msg)
+        return msg

@@ -8,7 +8,7 @@ Main tests for SMBus class, i2c_msg, and I2cFunc.
 import unittest
 from unittest import mock
 
-from smbus3 import I2cFunc, SMBus, i2c_msg
+from smbus3 import I2C_M_Bitflag, I2cFunc, SMBus, i2c_msg
 
 ##########################################################################
 # Mock open, close and ioctl so we can run our unit tests anywhere.
@@ -49,7 +49,8 @@ def mock_ioctl(fd, command, msg):
     assert command is not None
     assert isinstance(command, int)
 
-    # Reproduce i2c capability of a Raspberry Pi 3 w/o PEC support
+    # Reproduce i2c capability of a Raspberry Pi 3 w/o PEC support and w/o
+    # 10bit addressing support
     if command == I2C_FUNCS:
         msg.value = MOCK_I2C_FUNC
         print(f"Setting msg val: 0x{msg.value:X}")
@@ -181,6 +182,30 @@ class TestSMBus(SMBusTestCase):
         bus = SMBus(1)
         self.assertRaises(IOError, bus.write_quick, 80)
 
+    def test_timeout(self):
+        def set_timeout(bus, timeout=15):
+            bus.timeout = timeout
+
+        bus = SMBus(1)
+        set_timeout(bus)
+
+        self.assertEqual(bus._timeout, 15)
+        self.assertEqual(bus._get_timeout(), 15)
+        self.assertEqual(bus.timeout, 15)
+        bus.close()
+
+    def test_retries(self):
+        def set_retries(bus, retries=3):
+            bus.retries = retries
+
+        bus = SMBus(1)
+        set_retries(bus)
+
+        self.assertEqual(bus._retries, 3)
+        self.assertEqual(bus._get_retries(), 3)
+        self.assertEqual(bus.retries, 3)
+        bus.close()
+
     def test_pec(self):
         def set_pec(bus, enable=True):
             bus.pec = enable
@@ -196,6 +221,21 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(bus.pec, 1)
         bus.close()
         self.assertEqual(bus.pec, 0)
+
+    def test_tenbit(self):
+        def set_tenbit(bus, enable=True):
+            bus.tenbit = enable
+
+        # Enabling 10bit addressing should fail (no mocked support)
+        bus = SMBus(1)
+        self.assertRaises(IOError, set_tenbit, bus, True)
+        self.assertRaises(IOError, set_tenbit, bus, 1)
+        self.assertEqual(bus.tenbit, 0)
+
+        bus._tenbit = 1
+        self.assertEqual(bus.tenbit, 1)
+        bus.close()
+        self.assertEqual(bus.tenbit, 0)
 
 
 class TestSMBusWrapper(SMBusTestCase):
@@ -334,8 +374,25 @@ class TestI2CMsgRDWR(SMBusTestCase):
 
     def test_i2c_rd(self):
         with SMBus(1) as bus:
-            bus.i2c_rd(60, 10)
+            x = bus.i2c_rd(60, 10)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_WR > 0)
+            # Test that we can set alternative bitflags:
+            x = bus.i2c_rd(60, 10, flags=I2C_M_Bitflag.I2C_M_RD_TEN)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_RD_TEN > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_WR > 0)
 
     def test_i2c_wr(self):
         with SMBus(1) as bus:
-            bus.i2c_wr(60, [1, 2, 3])
+            x = bus.i2c_wr(60, [1, 2, 3])
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+
+            # Test that we can set alternative bitflags:
+            x = bus.i2c_wr(60, [1, 2, 3], flags=I2C_M_Bitflag.I2C_M_WR_TEN)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_WR_TEN > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
