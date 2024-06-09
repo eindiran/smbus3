@@ -6,11 +6,7 @@ Main tests for SMBus class, i2c_msg, and I2cFunc.
 """
 
 import unittest
-
-try:
-    from unittest import mock
-except ImportError:
-    from unittest import mock
+from unittest import mock
 
 from smbus3 import I2cFunc, SMBus, i2c_msg
 
@@ -31,6 +27,7 @@ I2C_SMBUS_I2C_BLOCK_DATA = 8
 I2C_SMBUS_BLOCK_MAX = 32
 
 MOCK_FD = "Mock file descriptor"
+MOCK_I2C_FUNC = 0xEFF0001
 
 # Test buffer for read operations
 test_buffer = [x for x in range(256)]
@@ -42,22 +39,28 @@ def mock_open(*args):
 
 
 def mock_close(*args):
+    print("Mocking close")
     assert args[0] == MOCK_FD
 
 
 def mock_read(fd, length):
+    print(f"Mocking read with length {length}")
     assert fd == MOCK_FD
-    return bytes(test_buffer[0:length])
+    val = bytes(test_buffer[0:length])
+    print(f"Read mock is returning test_buffer: {val}")
+    return val
 
 
 def mock_ioctl(fd, command, msg):
-    print("Mocking ioctl")
+    print(f"Mocking ioctl with command 0x{command:X} and msg {msg}")
     assert fd == MOCK_FD
     assert command is not None
+    assert isinstance(command, int)
 
     # Reproduce i2c capability of a Raspberry Pi 3 w/o PEC support
     if command == I2C_FUNCS:
-        msg.value = 0xEFF0001
+        msg.value = MOCK_I2C_FUNC
+        print(f"Setting msg val: 0x{msg.value:X}")
         return
 
     # Reproduce ioctl read operations
@@ -76,9 +79,10 @@ def mock_ioctl(fd, command, msg):
         raise OSError("Mocking SMBus Quick failed")
 
 
-# Override open, close and ioctl with our mock functions
+# Override open, close, read, and ioctl with our mock functions
 open_mock = mock.patch("smbus3.smbus3.os.open", mock_open)
 close_mock = mock.patch("smbus3.smbus3.os.close", mock_close)
+read_mock = mock.patch("smbus3.smbus3.os.read", mock_read)
 ioctl_mock = mock.patch("smbus3.smbus3.ioctl", mock_ioctl)
 ##########################################################################
 
@@ -90,11 +94,13 @@ class SMBusTestCase(unittest.TestCase):
     def setUp(self):
         open_mock.start()
         close_mock.start()
+        read_mock.start()
         ioctl_mock.start()
 
     def tearDown(self):
         open_mock.stop()
         close_mock.stop()
+        read_mock.stop()
         ioctl_mock.stop()
 
 
@@ -102,12 +108,13 @@ class SMBusTestCase(unittest.TestCase):
 class TestSMBus(SMBusTestCase):
     def test_func(self):
         bus = SMBus(1)
-        print(f"\nSupported I2C functionality: 0x{bus.funcs:X}")
+        print(f"Supported I2C functionality: 0x{bus.funcs:X}")
+        self.assertEqual(bus.funcs, MOCK_I2C_FUNC)
         bus.close()
 
     def test_enter_exit(self):
-        for id in (1, "/dev/i2c-alias"):
-            with SMBus(id) as bus:
+        for idx in (1, "/dev/i2c-alias"):
+            with SMBus(idx) as bus:
                 self.assertIsNotNone(bus.fd)
             self.assertIsNone(bus.fd, None)
 
@@ -118,10 +125,10 @@ class TestSMBus(SMBusTestCase):
         self.assertIsNone(bus.fd)
 
     def test_open_close(self):
-        for id in (1, "/dev/i2c-alias"):
+        for idx in (1, "/dev/i2c-alias"):
             bus = SMBus()
             self.assertIsNone(bus.fd)
-            bus.open(id)
+            bus.open(idx)
             self.assertIsNotNone(bus.fd)
             bus.close()
             self.assertIsNone(bus.fd)
@@ -181,9 +188,10 @@ class TestSMBusWrapper(SMBusTestCase):
 
     def test_func(self):
         with SMBus(1) as bus:
-            print(f"\nSupported I2C functionality: 0x{bus.funcs:X}")
+            print(f"Supported I2C functionality: 0x{bus.funcs:X}")
             self.assertTrue(bus.funcs & I2cFunc.I2C > 0)
             self.assertTrue(bus.funcs & I2cFunc.SMBUS_QUICK > 0)
+            self.assertFalse(bus.funcs & I2cFunc.SMBUS_PEC > 0)
 
     def test_read(self):
         res = []

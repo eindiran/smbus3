@@ -21,7 +21,7 @@ help: Makefile
 
 # all runs clean, then creates the venv and runs tests
 .PHONY: all
-all: clean venv precommit format lint test docs
+all: clean venv precommit format lint test coverage coverage_html_report docs
 
 # venv sets up the virtualenv
 # Tracked via a touchfile
@@ -43,12 +43,22 @@ clean:
 	rm -rf doc/_build
 	rm -rf doc/doctrees
 	rm -rf doc/man
+	rm -rf .coverage
+	rm -rf htmlcov
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 
 # Run the tests:
 .PHONY: test
 test: venv
-	. .venv/bin/activate; python -m unittest tests/test_datatypes.py; python -m unittest tests/test_smbus3.py
+	. .venv/bin/activate; coverage run -m unittest tests/test_datatypes.py; coverage run -m unittest tests/test_smbus3.py
+
+.PHONY: coverage
+coverage: test
+	. .venv/bin/activate; coverage report -m
+
+.PHONY: coverage_html_report
+coverage_html_report: test
+	. .venv/bin/activate; coverage html
 
 # Build the docs:
 docs: docs_html docs_man_page

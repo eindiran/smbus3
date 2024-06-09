@@ -250,13 +250,15 @@ make
 ```
 
 Currently available targets:
- - all
- - clean
- - docs
- - docs_html
- - docs_man_page
- - format
- - lint
- - precommit
- - test
- - venv
+  - `all`
+  - `clean`
+  - `coverage`
+  - `coverage_html_report`
+  - `docs`
+  - `docs_html`
+  - `docs_man_page`
+  - `format`
+  - `lint`
+  - `precommit`
+  - `test`
+  - `venv`
