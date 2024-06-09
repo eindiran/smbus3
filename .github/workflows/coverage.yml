@@ -1,8 +1,5 @@
 name: 'Generate test coverage report'
 on:
-    push:
-      branches:
-            - master
     pull_request:
         branches:
             - master
