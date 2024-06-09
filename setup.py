@@ -20,7 +20,7 @@ def find_version(*file_paths):
     raise RuntimeError(err_msg)
 
 
-README = read_file("README.md")
+README = read_file("README.rst")
 version = find_version("smbus3", "__init__.py")
 description = (
     "smbus3 is a drop-in replacement for smbus2, smbus-cffi, smbus-python "
@@ -39,7 +39,7 @@ setup(
     packages=["smbus3"],
     package_data={"smbus3": ["py.typed", "smbus3.pyi"]},
     long_description=README,
-    long_description_content_type="text/markdown",
+    long_description_content_type="text/x-rst",
     extras_require={
         "docs": ["sphinx >= 7.0.0"],
         "qa": ["ruff >= 0.4.8", "mypy >= 1.10.0", "coverage >= 7.5.3"],

@@ -12,7 +12,7 @@ needs_sphinx = "7.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.intersphinx", "sphinx.ext.extlinks"]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -65,9 +65,17 @@ html_theme = "alabaster"
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     "**": [
-        "relations.html",  # needs 'show_related': True theme option to display
+        "about.html",
+        "navigation.html",
+        "relations.html",
         "searchbox.html",
     ]
+}
+extlinks = {
+    "git_tag": ("https://github.com/eindiran/smbus3/tree/%s", "%s"),
+    "bug": ("https://github.com/eindiran/smbus3/issues/%s", "#%s"),
+    "feature": ("https://github.com/eindiran/smbus3/issues/%s", "#%s"),
+    "issue": ("https://github.com/eindiran/smbus3/issues/%s", "#%s"),
 }
 
 # -- Options for HTMLHelp output ------------------------------------------
