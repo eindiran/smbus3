@@ -261,4 +261,5 @@ Currently available targets:
   - `lint`
   - `precommit`
   - `test`
+  - `typecheck`
   - `venv`

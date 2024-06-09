@@ -7,7 +7,7 @@
 #    DESCRIPTION: Create a virtualenv, run tests, builds docs,
 #                 and other development tasks.
 #
-#   REQUIREMENTS: python3, venv
+#   REQUIREMENTS: python3, pip, venv
 #
 #==================================================================
 
@@ -21,7 +21,7 @@ help: Makefile
 
 # all runs clean, then creates the venv and runs tests
 .PHONY: all
-all: clean venv precommit format lint test coverage coverage_html_report docs
+all: clean venv precommit format lint test typecheck coverage coverage_html_report docs
 
 # venv sets up the virtualenv
 # Tracked via a touchfile
@@ -52,6 +52,11 @@ clean:
 .PHONY: test
 test: venv
 	. .venv/bin/activate; coverage run -m unittest tests/test_datatypes.py; coverage run -m unittest tests/test_smbus3.py
+
+# Typecheck the stub files with mypy
+.PHONY: typecheck
+typecheck: venv
+	. .venv/bin/activate; mypy . --exclude "build/"
 
 .PHONY: coverage
 coverage: test
