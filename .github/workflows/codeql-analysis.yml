@@ -19,7 +19,12 @@ jobs:
         language: [ 'python' ]
     permissions:
       pull-requests: write
-      contents: write
+      contents: read
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
+      actions: read
+    timeout-minutes: 360
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
