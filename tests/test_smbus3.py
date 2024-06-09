@@ -193,6 +193,18 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(bus.timeout, 15)
         bus.close()
 
+    def test_retries(self):
+        def set_retries(bus, retries=3):
+            bus.retries = retries
+
+        bus = SMBus(1)
+        set_retries(bus)
+
+        self.assertEqual(bus._retries, 3)
+        self.assertEqual(bus._get_retries(), 3)
+        self.assertEqual(bus.retries, 3)
+        bus.close()
+
     def test_pec(self):
         def set_pec(bus, enable=True):
             bus.pec = enable
