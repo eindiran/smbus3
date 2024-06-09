@@ -235,6 +235,7 @@ class TestSMBus(SMBusTestCase):
         bus._tenbit = 1
         self.assertEqual(bus.tenbit, 1)
         bus.close()
+        self.assertEqual(bus.tenbit, 0)
 
 
 class TestSMBusWrapper(SMBusTestCase):
