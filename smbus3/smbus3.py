@@ -128,6 +128,12 @@ class union_i2c_smbus_data(Union):
 
     _fields_ = [("byte", c_uint8), ("word", c_uint16), ("block", i2c_smbus_data)]
 
+    def __repr__(self):
+        return (
+            "<smbus3.smbus3.union_i2c_smbus_data "
+            f"byte: {self.byte} word: {self.word} block: {self.block}>"
+        )
+
 
 union_pointer_type = POINTER(union_i2c_smbus_data)
 
@@ -144,6 +150,13 @@ class i2c_smbus_ioctl_data(Structure):
         ("data", union_pointer_type),
     ]
     __slots__ = [name for name, type in _fields_]
+
+    def __repr__(self):
+        return (
+            "<smbus3.smbus3.i2c_smbus_ioctl_data "
+            f"read_write: {self.read_write} command: {self.command} "
+            f"size: {self.size} data: {self.data.contents!r}>"
+        )
 
     @staticmethod
     def create(read_write=I2C_SMBUS_READ, command=0, size=I2C_SMBUS_BYTE_DATA):
