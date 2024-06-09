@@ -251,4 +251,4 @@ Currently available targets:
 
 # Acknowledgements
 
-This project is built entirely on the foundation of [smbus2](https://github.com/kplindegaard/smbus2) and Karl-Petter Lindegaard (@kplindegaard) did.
+This project is built entirely on the foundation of the [smbus2](https://github.com/kplindegaard/smbus2) library for Python 2 & 3, written by Karl-Petter Lindegaard (@kplindegaard).
