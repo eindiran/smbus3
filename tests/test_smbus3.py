@@ -143,6 +143,13 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(bus.funcs, MOCK_I2C_FUNC_LIMITED)
         bus.close()
 
+        # Now try with full features:
+        with switch_to_full_featured_ioctl_mock():
+            bus = SMBus(1)
+            print(f"Supported I2C functionality: 0x{bus.funcs:X}")
+            self.assertEqual(bus.funcs, MOCK_I2C_FUNC_FULL)
+            bus.close()
+
     def test_enter_exit(self):
         for idx in (1, "/dev/i2c-alias"):
             with SMBus(idx) as bus:
