@@ -777,11 +777,11 @@ class SMBus:
         :type length: int
         :param flags: bitflags to pass (default: I2C_M_RD)
         :type flags: int
-        :rtype: list
+        :rtype: i2c_msg
         """
         msg = i2c_msg.read(i2c_addr, length, flags=flags)
         self.i2c_rdwr(msg)
-        return list(msg)
+        return msg
 
     def i2c_wr(self, i2c_addr, buf, flags=I2C_M_WR):
         """
@@ -794,7 +794,8 @@ class SMBus:
         :type buf: list
         :param flags: bitflags to pass (default: I2C_M_WR)
         :type flags: int
-        :rtype: None
+        :rtype: i2c_msg
         """
         msg = i2c_msg.write(i2c_addr, buf, flags=flags)
         self.i2c_rdwr(msg)
+        return msg

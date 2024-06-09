@@ -358,12 +358,25 @@ class TestI2CMsgRDWR(SMBusTestCase):
 
     def test_i2c_rd(self):
         with SMBus(1) as bus:
-            bus.i2c_rd(60, 10)
+            x = bus.i2c_rd(60, 10)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_WR > 0)
             # Test that we can set alternative bitflags:
-            bus.i2c_rd(60, 10, flags=I2C_M_Bitflag.I2C_M_RD_TEN)
+            x = bus.i2c_rd(60, 10, flags=I2C_M_Bitflag.I2C_M_RD_TEN)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_RD_TEN > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_WR > 0)
 
     def test_i2c_wr(self):
         with SMBus(1) as bus:
-            bus.i2c_wr(60, [1, 2, 3])
+            x = bus.i2c_wr(60, [1, 2, 3])
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+
             # Test that we can set alternative bitflags:
-            bus.i2c_wr(60, [1, 2, 3], flags=I2C_M_Bitflag.I2C_M_WR_TEN)
+            x = bus.i2c_wr(60, [1, 2, 3], flags=I2C_M_Bitflag.I2C_M_WR_TEN)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_TEN > 0)
+            self.assertTrue(x.flags & I2C_M_Bitflag.I2C_M_WR_TEN > 0)
+            self.assertFalse(x.flags & I2C_M_Bitflag.I2C_M_RD > 0)
