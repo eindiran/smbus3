@@ -40,7 +40,10 @@ setup(
     package_data={"smbus3": ["py.typed", "smbus3.pyi"]},
     long_description=README,
     long_description_content_type="text/markdown",
-    extras_require={"docs": ["sphinx >= 7.0.0"], "qa": ["ruff"]},
+    extras_require={
+        "docs": ["sphinx >= 7.0.0"],
+        "qa": ["ruff >= 0.4.8", "mypy >= 1.10.0", "coverage >= 7.5.3"],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",

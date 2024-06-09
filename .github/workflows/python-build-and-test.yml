@@ -41,6 +41,9 @@ jobs:
         ruff format --diff --config .ruff.toml .
         # Run the linter, failing on lint warnings or errors
         ruff check --config .ruff.toml .
-    - name: Test with pytest
+    - name: Type check with mypy
+      run: |
+        mypy . --exclude "build/"
+    - name: Test with unittest
       run: |
         python3 -m unittest tests/*.py
