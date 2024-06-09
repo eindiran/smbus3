@@ -1,5 +1,5 @@
 # smbus3
-A drop-in replacement for smbus2, smbus-cffi, or smbus-python written in pure Python and intended for use with Python 3.9+.
+A drop-in replacement for [smbus2](https://pypi.org/project/smbus2/), [smbus-cffi](https://pypi.org/project/smbus-cffi/), or [smbus-python](https://pypi.org/project/smbus/) written in pure Python and intended for use with Python 3.9+.
 
 This library was forked from @kplindegaard's excellent [smbus2](https://github.com/kplindegaard/smbus2). If you need a package that works with Python 2.7 - 3.8, smbus2 is the way to go.
 
@@ -8,18 +8,15 @@ This library was forked from @kplindegaard's excellent [smbus2](https://github.c
 
 ## Introduction
 
-smbus3 is (yet another) pure Python implementation of the [python-smbus](http://www.lm-sensors.org/browser/i2c-tools/trunk/py-smbus/) package.
-
-It was designed from the ground up with two goals in mind:
-
-1. It should be a drop-in replacement of smbus. The syntax shall be the same.
-2. Use the inherent i2c structs and unions to a greater extent than other pure Python implementations like [pysmbus](https://github.com/bjornt/pysmbus) does. By doing so, it will be more feature complete and easier to extend.
+smbus3 is a Python 3 implementation of the SMBus interface for use in Python 3. It should be a drop-in replacement of both the original [`smbus` package](https://pypi.org/project/smbus/), the C-FFI [`smbus-cffi` package](https://pypi.org/project/smbus-cffi/) and the pure Python [`smbus2` package](https://pypi.org/project/smbus2/). The interfaces will be shared for backwards compatibility with `smbus2`.
 
 Currently supported features are:
 
 * Get i2c capabilities (`I2C_FUNCS`)
 * SMBus Packet Error Checking (PEC) support
 * 10bit addressing support
+* Manual control over retries and timeouts
+* Create raw `i2c_msg` messages
 * `read_byte()`
 * `write_byte()`
 * `read_byte_data()`
