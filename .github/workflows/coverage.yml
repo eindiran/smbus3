@@ -10,6 +10,11 @@ jobs:
           fail-fast: true
           matrix:
             python-version: ["3.12"]
+        permissions:
+          # Gives the action the necessary permissions for publishing new
+          # comments in pull requests.
+          pull-requests: write
+          contents: write
         steps:
           - uses: actions/checkout@v4
           - name: Set up Python ${{ matrix.python-version }}
@@ -29,10 +34,7 @@ jobs:
               pip install .
           - name: Generate coverage xml
             run: |
-              coverage xml
-    display:
-        runs-on: ubuntu-latest
-        steps:
+              coverage run -m unittest tests/*.py && coverage xml
           - name: Display coverage
             uses: orgoro/coverage@v3.1
             with:
