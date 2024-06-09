@@ -66,6 +66,10 @@ def mock_ioctl_limited(fd, command, msg):
         elif msg.size == I2C_SMBUS_I2C_BLOCK_DATA:
             for k in range(msg.data.contents.byte):
                 msg.data.contents.block[k + 1] = test_buffer[offset + k]
+        elif msg.size == I2C_SMBUS_BLOCK_DATA:
+            msg.data.contents.block[0] = 32
+            for k in range(32):
+                msg.data.contents.block[k + 1] = test_buffer[offset + k]
 
     # Reproduce a failing Quick write transaction
     if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_WRITE and msg.size == I2C_SMBUS_QUICK:
@@ -94,6 +98,10 @@ def mock_ioctl_full(fd, command, msg):
             msg.data.contents.word = test_buffer[offset + 1] * 256 + test_buffer[offset]
         elif msg.size == I2C_SMBUS_I2C_BLOCK_DATA:
             for k in range(msg.data.contents.byte):
+                msg.data.contents.block[k + 1] = test_buffer[offset + k]
+        elif msg.size == I2C_SMBUS_BLOCK_DATA:
+            msg.data.contents.block[0] = 32
+            for k in range(32):
                 msg.data.contents.block[k + 1] = test_buffer[offset + k]
 
 
@@ -180,10 +188,31 @@ class TestSMBus(SMBusTestCase):
         bus.write_byte(80, 0x001, force=False)
         # Write byte - force = True
         bus.write_byte(80, 0x001, force=True)
+        # Write byte data
+        bus.write_byte_data(80, 1, 0x001)
         # Write word data:
         bus.write_word_data(80, 1, 0x001, force=False)
         # Process call:
         self.assertEqual(bus.process_call(80, 1, 0x001), 1)
+        # Write block data:
+        bus.write_block_data(80, 1, [1, 2, 3])
+        with self.assertRaises(ValueError):
+            # Try writing too large of a block
+            x = [_ for _ in range(35)]
+            bus.write_block_data(80, 1, x)
+        # Write i2c block data:
+        bus.write_i2c_block_data(80, 1, [1, 2, 3])
+        with self.assertRaises(ValueError):
+            # Try writing too large of a block
+            x = [_ for _ in range(35)]
+            bus.write_i2c_block_data(80, 1, x)
+        # Block process call:
+        x = [_ for _ in range(8)]
+        self.assertEqual(bus.block_process_call(80, 1, x), x)
+        with self.assertRaises(ValueError):
+            # Try writing too large of a block
+            x = [_ for _ in range(35)]
+            bus.block_process_call(80, 1, x)
         bus.close()
 
     def test_read(self):
@@ -192,6 +221,7 @@ class TestSMBus(SMBusTestCase):
         res3 = []
         res4 = []
         res5 = []
+        res6 = []
 
         bus = SMBus(1)
 
@@ -208,7 +238,7 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(len(res2), 2, msg=INCORRECT_LENGTH_MSG)
         self.assertListEqual(res, res2, msg="Byte and word reads differ")
 
-        # Read block of N bytes
+        # Read block of N bytes (i2c)
         n = 2
         x = bus.read_i2c_block_data(80, 0, n)
         res3.extend(x)
@@ -227,7 +257,114 @@ class TestSMBus(SMBusTestCase):
             res5.append(x)
         self.assertEqual(len(res5), 2, msg=INCORRECT_LENGTH_MSG)
 
+        # Read block of 32 bytes
+        x = bus.read_block_data(80, 0)
+        res6.extend(x)
+        self.assertEqual(len(res6), 32, msg=INCORRECT_LENGTH_MSG)
+        self.assertListEqual(res, res6[:2], msg="Byte and block reads differ")
+        self.assertEqual(
+            sum(res6), sum(_ for _ in range(32)), msg="Incorrect values from read_block_data"
+        )
+
         bus.close()
+
+    def test_write_full(self):
+        """
+        Test writes with 10bit + PEC enabled.
+        """
+        with switch_to_full_featured_ioctl_mock():
+            bus = SMBus(1)
+            bus.pec = 1
+            bus.tenbit = 1
+            # Write byte:
+            bus.write_byte(80, 0x001, force=False)
+            # Write byte - force = True
+            bus.write_byte(80, 0x001, force=True)
+            # Write byte data
+            bus.write_byte_data(80, 1, 0x001)
+            # Write word data:
+            bus.write_word_data(80, 1, 0x001, force=False)
+            # Process call:
+            self.assertEqual(bus.process_call(80, 1, 0x001), 1)
+            # Write block data:
+            bus.write_block_data(80, 1, [1, 2, 3])
+            with self.assertRaises(ValueError):
+                # Try writing too large of a block
+                x = [_ for _ in range(35)]
+                bus.write_block_data(80, 1, x)
+            # Write i2c block data:
+            bus.write_i2c_block_data(80, 1, [1, 2, 3])
+            with self.assertRaises(ValueError):
+                # Try writing too large of a block
+                x = [_ for _ in range(35)]
+                bus.write_i2c_block_data(80, 1, x)
+            # Block process call:
+            x = [_ for _ in range(8)]
+            self.assertEqual(bus.block_process_call(80, 1, x), x)
+            with self.assertRaises(ValueError):
+                # Try writing too large of a block
+                x = [_ for _ in range(35)]
+                bus.block_process_call(80, 1, x)
+            bus.close()
+
+    def test_read_full(self):
+        """
+        Test reads with 10bit + PEC enabled.
+        """
+        with switch_to_full_featured_ioctl_mock():
+            res = []
+            res2 = []
+            res3 = []
+            res4 = []
+            res5 = []
+            res6 = []
+
+            bus = SMBus(1)
+            bus.pec = 1
+            bus.tenbit = 1
+
+            # Read bytes
+            for k in range(2):
+                x = bus.read_byte_data(80, k)
+                res.append(x)
+            self.assertEqual(len(res), 2, msg=INCORRECT_LENGTH_MSG)
+
+            # Read word
+            x = bus.read_word_data(80, 0)
+            res2.append(x & 255)
+            res2.append(x / 256)
+            self.assertEqual(len(res2), 2, msg=INCORRECT_LENGTH_MSG)
+            self.assertListEqual(res, res2, msg="Byte and word reads differ")
+
+            # Read block of N bytes (i2c)
+            n = 2
+            x = bus.read_i2c_block_data(80, 0, n)
+            res3.extend(x)
+            self.assertEqual(len(res3), n, msg=INCORRECT_LENGTH_MSG)
+            self.assertListEqual(res, res3, msg="Byte and block reads differ")
+
+            # Read byte - force False
+            for _ in range(2):
+                x = bus.read_byte(80, force=False)
+                res4.append(x)
+            self.assertEqual(len(res4), 2, msg=INCORRECT_LENGTH_MSG)
+
+            # Read byte - force True
+            for _ in range(2):
+                x = bus.read_byte(80, force=True)
+                res5.append(x)
+            self.assertEqual(len(res5), 2, msg=INCORRECT_LENGTH_MSG)
+
+            # Read block of 32 bytes
+            x = bus.read_block_data(80, 0)
+            res6.extend(x)
+            self.assertEqual(len(res6), 32, msg=INCORRECT_LENGTH_MSG)
+            self.assertListEqual(res, res6[:2], msg="Byte and block reads differ")
+            self.assertEqual(
+                sum(res6), sum(_ for _ in range(32)), msg="Incorrect values from read_block_data"
+            )
+
+            bus.close()
 
     def test_quick(self):
         bus = SMBus(1)
