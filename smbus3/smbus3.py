@@ -212,7 +212,7 @@ class i2c_msg(Structure):
         return string_at(self.buf, self.len)
 
     def __repr__(self):
-        return "i2c_msg(%d,%d,%r)" % (self.addr, self.flags, self.__bytes__())
+        return f"i2c_msg({self.addr:d},{self.flags:x},{self.__bytes__()!r})"
 
     def __str__(self):
         """
@@ -661,7 +661,7 @@ class SMBus:
         """
         length = len(data)
         if length > I2C_SMBUS_BLOCK_MAX:
-            raise ValueError("Data length cannot exceed %d bytes" % I2C_SMBUS_BLOCK_MAX)
+            raise ValueError(f"Data length cannot exceed {I2C_SMBUS_BLOCK_MAX:d} bytes")
         self._set_address(i2c_addr, force=force)
         msg = i2c_smbus_ioctl_data.create(
             read_write=I2C_SMBUS_WRITE, command=register, size=I2C_SMBUS_BLOCK_DATA
@@ -689,7 +689,7 @@ class SMBus:
         """
         length = len(data)
         if length > I2C_SMBUS_BLOCK_MAX:
-            raise ValueError("Data length cannot exceed %d bytes" % I2C_SMBUS_BLOCK_MAX)
+            raise ValueError(f"Data length cannot exceed {I2C_SMBUS_BLOCK_MAX:d} bytes")
         self._set_address(i2c_addr, force=force)
         msg = i2c_smbus_ioctl_data.create(
             read_write=I2C_SMBUS_WRITE, command=register, size=I2C_SMBUS_BLOCK_PROC_CALL
@@ -717,7 +717,7 @@ class SMBus:
         :rtype: list
         """
         if length > I2C_SMBUS_BLOCK_MAX:
-            raise ValueError("Desired block length over %d bytes" % I2C_SMBUS_BLOCK_MAX)
+            raise ValueError(f"Data length cannot exceed {I2C_SMBUS_BLOCK_MAX:d} bytes")
         self._set_address(i2c_addr, force=force)
         msg = i2c_smbus_ioctl_data.create(
             read_write=I2C_SMBUS_READ, command=register, size=I2C_SMBUS_I2C_BLOCK_DATA
@@ -743,7 +743,7 @@ class SMBus:
         """
         length = len(data)
         if length > I2C_SMBUS_BLOCK_MAX:
-            raise ValueError("Data length cannot exceed %d bytes" % I2C_SMBUS_BLOCK_MAX)
+            raise ValueError(f"Data length cannot exceed {I2C_SMBUS_BLOCK_MAX:d} bytes")
         self._set_address(i2c_addr, force=force)
         msg = i2c_smbus_ioctl_data.create(
             read_write=I2C_SMBUS_WRITE, command=register, size=I2C_SMBUS_I2C_BLOCK_DATA
