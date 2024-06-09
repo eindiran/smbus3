@@ -8,7 +8,7 @@ Main tests for SMBus class, i2c_msg, and I2cFunc.
 import unittest
 from unittest import mock
 
-from smbus3 import I2cFunc, SMBus, i2c_msg
+from smbus3 import I2C_M_Bitflag, I2cFunc, SMBus, i2c_msg
 
 ##########################################################################
 # Mock open, close and ioctl so we can run our unit tests anywhere.
@@ -359,7 +359,11 @@ class TestI2CMsgRDWR(SMBusTestCase):
     def test_i2c_rd(self):
         with SMBus(1) as bus:
             bus.i2c_rd(60, 10)
+            # Test that we can set alternative bitflags:
+            bus.i2c_rd(60, 10, flags=I2C_M_Bitflag.I2C_M_RD_TEN)
 
     def test_i2c_wr(self):
         with SMBus(1) as bus:
             bus.i2c_wr(60, [1, 2, 3])
+            # Test that we can set alternative bitflags:
+            bus.i2c_wr(60, [1, 2, 3], flags=I2C_M_Bitflag.I2C_M_WR_TEN)

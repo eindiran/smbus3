@@ -92,6 +92,20 @@ I2C_M_RD = 0x0001
 I2C_M_WR = 0x0000
 I2C_M_TEN = 0x0010
 
+
+class I2C_M_Bitflag(IntFlag):
+    """
+    These flags identify the operations to perform with
+    a specific i2c_msg.
+    """
+
+    I2C_M_RD = 0x0001
+    I2C_M_WR = 0x0000
+    I2C_M_TEN = 0x0010
+    I2C_M_RD_TEN = I2C_M_RD ^ I2C_M_TEN
+    I2C_M_WR_TEN = I2C_M_WR ^ I2C_M_TEN
+
+
 # Pointer definitions
 LP_c_uint8 = POINTER(c_uint8)
 LP_c_uint16 = POINTER(c_uint16)
@@ -212,7 +226,7 @@ class i2c_msg(Structure):
         return s
 
     @staticmethod
-    def read(address, length, is_ten_bit=False):
+    def read(address, length, flags=I2C_M_RD):
         """
         Prepares an i2c read transaction.
 
@@ -220,17 +234,16 @@ class i2c_msg(Structure):
         :type: address: int
         :param length: Number of bytes to read.
         :type: length: int
-        :param is_ten_bit: Whether to include I2C_M_TEN
-        :type: is_ten_bit: bool
+        :param flags: bitflags to pass (default: I2C_M_RD)
+        :type flags: int
         :return: New :py:class:`i2c_msg` instance for read operation.
         :rtype: :py:class:`i2c_msg`
         """
         arr = create_string_buffer(length)
-        flags = I2C_M_RD ^ I2C_M_TEN if is_ten_bit else I2C_M_RD
         return i2c_msg(addr=address, flags=flags, len=length, buf=arr)
 
     @staticmethod
-    def write(address, buf, is_ten_bit=False):
+    def write(address, buf, flags=I2C_M_WR):
         """
         Prepares an i2c write transaction.
 
@@ -238,8 +251,8 @@ class i2c_msg(Structure):
         :type address: int
         :param buf: Bytes to write. Either list of values or str.
         :type buf: list
-        :param is_ten_bit: Whether to include I2C_M_TEN
-        :type: is_ten_bit: bool
+        :param flags: bitflags to pass (default: I2C_M_WR)
+        :type flags: int
         :return: New :py:class:`i2c_msg` instance for write operation.
         :rtype: :py:class:`i2c_msg`
         """
@@ -248,7 +261,6 @@ class i2c_msg(Structure):
         else:
             buf = bytes(buf)
         arr = create_string_buffer(buf, len(buf))
-        flags = I2C_M_WR ^ I2C_M_TEN if is_ten_bit else I2C_M_WR
         return i2c_msg(addr=address, flags=flags, len=len(arr), buf=arr)
 
 
@@ -755,7 +767,7 @@ class SMBus:
         ioctl_data = i2c_rdwr_ioctl_data.create(*i2c_msgs)
         ioctl(self.fd, I2C_RDWR, ioctl_data)
 
-    def i2c_rd(self, i2c_addr, length, is_ten_bit=False):
+    def i2c_rd(self, i2c_addr, length, flags=I2C_M_RD):
         """
         Perform a single i2c read operation, given an i2c_addr and length.
 
@@ -763,15 +775,15 @@ class SMBus:
         :type i2c_addr: int
         :param length: length of read.
         :type length: int
-        :param is_ten_bit: Whether to include I2C_M_TEN
-        :type: is_ten_bit: bool
+        :param flags: bitflags to pass (default: I2C_M_RD)
+        :type flags: int
         :rtype: list
         """
-        msg = i2c_msg.read(i2c_addr, length, is_ten_bit=is_ten_bit)
+        msg = i2c_msg.read(i2c_addr, length, flags=flags)
         self.i2c_rdwr(msg)
         return list(msg)
 
-    def i2c_wr(self, i2c_addr, buf, is_ten_bit=False):
+    def i2c_wr(self, i2c_addr, buf, flags=I2C_M_WR):
         """
         Perform a single i2c write operation, given an i2c_addr and a
         buffer to copy.
@@ -780,9 +792,9 @@ class SMBus:
         :type i2c_addr: int
         :param buf: buffer to write.
         :type buf: list
-        :param is_ten_bit: Whether to include I2C_M_TEN
-        :type: is_ten_bit: bool
+        :param flags: bitflags to pass (default: I2C_M_WR)
+        :type flags: int
         :rtype: None
         """
-        msg = i2c_msg.write(i2c_addr, buf, is_ten_bit=False)
+        msg = i2c_msg.write(i2c_addr, buf, flags=flags)
         self.i2c_rdwr(msg)
