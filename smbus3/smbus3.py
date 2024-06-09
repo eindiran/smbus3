@@ -18,12 +18,16 @@ from ctypes import (
 from fcntl import ioctl
 
 # Commands from uapi/linux/i2c-dev.h
+I2C_RETRIES = 0x0701  # Number of retries
+I2C_TIMEOUT = 0x0702  # Timeout
 I2C_SLAVE = 0x0703  # Use this slave address
 I2C_SLAVE_FORCE = 0x0706  # Use this slave address, even if it is already in use by a driver!
+I2C_TENBIT = 0x0704  # 0 for 7 bit addrs, != 0 for 10 bit
+# NOTE: 10-bit address support is very limited
 I2C_FUNCS = 0x0705  # Get the adapter functionality mask
 I2C_RDWR = 0x0707  # Combined R/W transfer (one STOP only)
-I2C_SMBUS = 0x0720  # SMBus transfer. Takes pointer to i2c_smbus_ioctl_data
 I2C_PEC = 0x0708  # != 0 to use PEC with SMBus
+I2C_SMBUS = 0x0720  # SMBus transfer. Takes pointer to i2c_smbus_ioctl_data
 
 # SMBus transfer read or write markers from uapi/linux/i2c.h
 I2C_SMBUS_WRITE = 0
@@ -85,6 +89,8 @@ class I2cFunc(IntFlag):
 
 # i2c_msg flags from uapi/linux/i2c.h
 I2C_M_RD = 0x0001
+I2C_M_WR = 0x0000
+I2C_M_TEN = 0x0010
 
 # Pointer definitions
 LP_c_uint8 = POINTER(c_uint8)
@@ -104,6 +110,8 @@ class i2c_smbus_data(Array):
     """
 
     _length_ = I2C_SMBUS_BLOCK_MAX + 2
+    # Add two additional blocks, one for length, one for user-space
+    # compatibility.
     _type_ = c_uint8
 
 
@@ -204,7 +212,7 @@ class i2c_msg(Structure):
         return s
 
     @staticmethod
-    def read(address, length):
+    def read(address, length, is_ten_bit=False):
         """
         Prepares an i2c read transaction.
 
@@ -212,14 +220,17 @@ class i2c_msg(Structure):
         :type: address: int
         :param length: Number of bytes to read.
         :type: length: int
+        :param is_ten_bit: Whether to include I2C_M_TEN
+        :type: is_ten_bit: bool
         :return: New :py:class:`i2c_msg` instance for read operation.
         :rtype: :py:class:`i2c_msg`
         """
         arr = create_string_buffer(length)
-        return i2c_msg(addr=address, flags=I2C_M_RD, len=length, buf=arr)
+        flags = I2C_M_RD ^ I2C_M_TEN if is_ten_bit else I2C_M_RD
+        return i2c_msg(addr=address, flags=flags, len=length, buf=arr)
 
     @staticmethod
-    def write(address, buf):
+    def write(address, buf, is_ten_bit=False):
         """
         Prepares an i2c write transaction.
 
@@ -227,6 +238,8 @@ class i2c_msg(Structure):
         :type address: int
         :param buf: Bytes to write. Either list of values or str.
         :type buf: list
+        :param is_ten_bit: Whether to include I2C_M_TEN
+        :type: is_ten_bit: bool
         :return: New :py:class:`i2c_msg` instance for write operation.
         :rtype: :py:class:`i2c_msg`
         """
@@ -235,7 +248,8 @@ class i2c_msg(Structure):
         else:
             buf = bytes(buf)
         arr = create_string_buffer(buf, len(buf))
-        return i2c_msg(addr=address, flags=0, len=len(arr), buf=arr)
+        flags = I2C_M_WR ^ I2C_M_TEN if is_ten_bit else I2C_M_WR
+        return i2c_msg(addr=address, flags=flags, len=len(arr), buf=arr)
 
 
 class i2c_rdwr_ioctl_data(Structure):
@@ -343,7 +357,7 @@ class SMBus:
         """
         Enable/Disable PEC (Packet Error Checking) - SMBus 1.1 and later
 
-        :param enable:
+        :param enable: Whether to enable PEC or not.
         :type enable: bool
         :raise IOError: if SMBUS_PEC is not supported.
         :rtype: None
@@ -355,6 +369,60 @@ class SMBus:
 
     pec = property(_get_pec, enable_pec)  # Drop-in replacement for smbus member "pec"
     """Get and set SMBus PEC. 0 = disabled (default), 1 = enabled."""
+
+    def _get_tenbit(self):
+        return self._tenbit
+
+    def enable_tenbit(self, enable=True):
+        """
+        Enable 10 bit addresses if they are supported.
+
+        :param enable: Whether to enable 10bit addresses or not.
+        :type enable: bool
+        :raise IOError: if ADDR_10BIT is not supported.
+        :rtype: None
+        """
+        if not (self.funcs & I2cFunc.ADDR_10BIT):
+            raise OSError("ADDR_10BIT is not a feature")
+        self._tenbit = int(enable)
+        ioctl(self.fd, I2C_TENBIT, self._tenbit)
+
+    tenbit = property(_get_tenbit, enable_tenbit)
+    """Get and set 10bit addressing. 0 = disabled (default), 1 = enabled."""
+
+    def _get_timeout(self):
+        return self._timeout
+
+    def set_timeout(self, timeout):
+        """
+        Set the timeout in units of 10ms.
+
+        :param timeout: timeout as positive int in units of 10ms.
+        :type timeout: int
+        :rtype: None
+        """
+        self._timeout = timeout
+        ioctl(self.fd, I2C_TIMEOUT, self._timeout)
+
+    timeout = property(_get_timeout, set_timeout)
+    """Get and set I2C timeout in units of 10ms."""
+
+    def _get_retries(self):
+        return self._retries
+
+    def set_retries(self, retries):
+        """
+        Set the retries.
+
+        :param retries: retries as positive int.
+        :type retries: int
+        :rtype: None
+        """
+        self._retries = retries
+        ioctl(self.fd, I2C_RETRIES, self._retries)
+
+    retries = property(_get_retries, set_retries)
+    """Get and set I2C retries."""
 
     def _set_address(self, address, force=None):
         """
@@ -687,7 +755,7 @@ class SMBus:
         ioctl_data = i2c_rdwr_ioctl_data.create(*i2c_msgs)
         ioctl(self.fd, I2C_RDWR, ioctl_data)
 
-    def i2c_rd(self, i2c_addr, length):
+    def i2c_rd(self, i2c_addr, length, is_ten_bit=False):
         """
         Perform a single i2c read operation, given an i2c_addr and length.
 
@@ -695,13 +763,15 @@ class SMBus:
         :type i2c_addr: int
         :param length: length of read.
         :type length: int
+        :param is_ten_bit: Whether to include I2C_M_TEN
+        :type: is_ten_bit: bool
         :rtype: list
         """
-        msg = i2c_msg.read(i2c_addr, length)
+        msg = i2c_msg.read(i2c_addr, length, is_ten_bit=is_ten_bit)
         self.i2c_rdwr(msg)
         return list(msg)
 
-    def i2c_wr(self, i2c_addr, buf):
+    def i2c_wr(self, i2c_addr, buf, is_ten_bit=False):
         """
         Perform a single i2c write operation, given an i2c_addr and a
         buffer to copy.
@@ -710,7 +780,9 @@ class SMBus:
         :type i2c_addr: int
         :param buf: buffer to write.
         :type buf: list
+        :param is_ten_bit: Whether to include I2C_M_TEN
+        :type: is_ten_bit: bool
         :rtype: None
         """
-        msg = i2c_msg.write(i2c_addr, buf)
+        msg = i2c_msg.write(i2c_addr, buf, is_ten_bit=False)
         self.i2c_rdwr(msg)
