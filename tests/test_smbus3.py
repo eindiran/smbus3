@@ -49,7 +49,8 @@ def mock_ioctl(fd, command, msg):
     assert command is not None
     assert isinstance(command, int)
 
-    # Reproduce i2c capability of a Raspberry Pi 3 w/o PEC support
+    # Reproduce i2c capability of a Raspberry Pi 3 w/o PEC support and w/o
+    # 10bit addressing support
     if command == I2C_FUNCS:
         msg.value = MOCK_I2C_FUNC
         print(f"Setting msg val: 0x{msg.value:X}")
@@ -220,6 +221,20 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(bus.pec, 1)
         bus.close()
         self.assertEqual(bus.pec, 0)
+
+    def test_tenbit(self):
+        def set_tenbit(bus, enable=True):
+            bus.tenbit = enable
+
+        # Enabling 10bit addressing should fail (no mocked support)
+        bus = SMBus(1)
+        self.assertRaises(IOError, set_tenbit, bus, True)
+        self.assertRaises(IOError, set_tenbit, bus, 1)
+        self.assertEqual(bus.tenbit, 0)
+
+        bus._tenbit = 1
+        self.assertEqual(bus.tenbit, 1)
+        bus.close()
 
 
 class TestSMBusWrapper(SMBusTestCase):

@@ -319,6 +319,7 @@ class SMBus:
         self.force = force
         self._force_last = None
         self._pec = 0
+        self._tenbit = 0
 
     def __enter__(self):
         """Enter handler."""
@@ -359,6 +360,7 @@ class SMBus:
             os.close(self.fd)
             self.fd = None
             self._pec = 0
+            self._tenbit = 0
             self.address = None
             self._force_last = None
 
