@@ -31,6 +31,7 @@ jobs:
             run: |
               coverage run -m unittest tests/*.py && coverage xml
     display:
+        needs: generate
         runs-on: ubuntu-latest
         steps:
           - name: Display coverage
