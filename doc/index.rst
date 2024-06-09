@@ -9,4 +9,3 @@ smbus3
     :glob:
 
     *
-    ../LICENSE.rst
