@@ -6,12 +6,10 @@ Main tests for SMBus class, i2c_msg, and I2cFunc.
 """
 
 import unittest
+from contextlib import contextmanager
 from unittest import mock
 
 from smbus3 import I2C_M_Bitflag, I2cFunc, SMBus, i2c_msg
-
-##########################################################################
-# Mock open, close and ioctl so we can run our unit tests anywhere.
 
 # Required I2C constant definitions repeated
 I2C_FUNCS = 0x0705  # Get the adapter functionality mask
@@ -22,17 +20,19 @@ I2C_SMBUS_READ = 1
 I2C_SMBUS_QUICK = 0
 I2C_SMBUS_BYTE_DATA = 2
 I2C_SMBUS_WORD_DATA = 3
-I2C_SMBUS_BLOCK_DATA = 5  # Can't get this one to work on my Raspberry Pi
+I2C_SMBUS_BLOCK_DATA = 5
 I2C_SMBUS_I2C_BLOCK_DATA = 8
 I2C_SMBUS_BLOCK_MAX = 32
 
 MOCK_FD = "Mock file descriptor"
-MOCK_I2C_FUNC = 0xEFF0001
+MOCK_I2C_FUNC_LIMITED = 0xEFF0001
+MOCK_I2C_FUNC_FULL = 0xEFF000B
 
 # Test buffer for read operations
 test_buffer = [x for x in range(256)]
 
 
+# Mock open, close and ioctl so we can run our unit tests anywhere.
 def mock_open(*args):
     print(f"Mocking open: {args[0]}")
     return MOCK_FD
@@ -43,7 +43,7 @@ def mock_close(*args):
     assert args[0] == MOCK_FD
 
 
-def mock_ioctl(fd, command, msg):
+def mock_ioctl_limited(fd, command, msg):
     print(f"Mocking ioctl with command 0x{command:X} and msg {msg}")
     assert fd == MOCK_FD
     assert command is not None
@@ -52,7 +52,7 @@ def mock_ioctl(fd, command, msg):
     # Reproduce i2c capability of a Raspberry Pi 3 w/o PEC support and w/o
     # 10bit addressing support
     if command == I2C_FUNCS:
-        msg.value = MOCK_I2C_FUNC
+        msg.value = MOCK_I2C_FUNC_LIMITED
         print(f"Setting msg val: 0x{msg.value:X}")
         return
 
@@ -66,17 +66,66 @@ def mock_ioctl(fd, command, msg):
         elif msg.size == I2C_SMBUS_I2C_BLOCK_DATA:
             for k in range(msg.data.contents.byte):
                 msg.data.contents.block[k + 1] = test_buffer[offset + k]
+        elif msg.size == I2C_SMBUS_BLOCK_DATA:
+            msg.data.contents.block[0] = 32
+            for k in range(32):
+                msg.data.contents.block[k + 1] = test_buffer[offset + k]
 
     # Reproduce a failing Quick write transaction
     if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_WRITE and msg.size == I2C_SMBUS_QUICK:
         raise OSError("Mocking SMBus Quick failed")
 
 
+def mock_ioctl_full(fd, command, msg):
+    print(f"Mocking ioctl with command 0x{command:X} and msg {msg}")
+    assert fd == MOCK_FD
+    assert command is not None
+    assert isinstance(command, int)
+
+    # Reproduce i2c capability w/ PEC support and w/
+    # 10bit addressing support
+    if command == I2C_FUNCS:
+        msg.value = MOCK_I2C_FUNC_FULL
+        print(f"Setting msg val: 0x{msg.value:X}")
+        return
+
+    # Reproduce ioctl read operations
+    if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_READ:
+        offset = msg.command
+        if msg.size == I2C_SMBUS_BYTE_DATA:
+            msg.data.contents.byte = test_buffer[offset]
+        elif msg.size == I2C_SMBUS_WORD_DATA:
+            msg.data.contents.word = test_buffer[offset + 1] * 256 + test_buffer[offset]
+        elif msg.size == I2C_SMBUS_I2C_BLOCK_DATA:
+            for k in range(msg.data.contents.byte):
+                msg.data.contents.block[k + 1] = test_buffer[offset + k]
+        elif msg.size == I2C_SMBUS_BLOCK_DATA:
+            msg.data.contents.block[0] = 32
+            for k in range(32):
+                msg.data.contents.block[k + 1] = test_buffer[offset + k]
+
+
 # Override open, close, read, and ioctl with our mock functions
 open_mock = mock.patch("smbus3.smbus3.os.open", mock_open)
 close_mock = mock.patch("smbus3.smbus3.os.close", mock_close)
-ioctl_mock = mock.patch("smbus3.smbus3.ioctl", mock_ioctl)
-##########################################################################
+ioctl_limited_mock = mock.patch("smbus3.smbus3.ioctl", mock_ioctl_limited)
+ioctl_full_mock = mock.patch("smbus3.smbus3.ioctl", mock_ioctl_full)
+
+
+@contextmanager
+def switch_to_full_featured_ioctl_mock():
+    """
+    This context manager allows you to temporarily switch the I2C_FUNCS supported
+    by the ioctl mock used in the test.
+    """
+    try:
+        ioctl_limited_mock.stop()
+        ioctl_full_mock.start()
+        yield
+    finally:
+        ioctl_full_mock.stop()
+        ioctl_limited_mock.start()
+
 
 # Common error messages
 INCORRECT_LENGTH_MSG = "Result array of incorrect length."
@@ -86,12 +135,12 @@ class SMBusTestCase(unittest.TestCase):
     def setUp(self):
         open_mock.start()
         close_mock.start()
-        ioctl_mock.start()
+        ioctl_limited_mock.start()
 
     def tearDown(self):
         open_mock.stop()
         close_mock.stop()
-        ioctl_mock.stop()
+        ioctl_limited_mock.stop()
 
 
 # Test cases
@@ -99,8 +148,15 @@ class TestSMBus(SMBusTestCase):
     def test_func(self):
         bus = SMBus(1)
         print(f"Supported I2C functionality: 0x{bus.funcs:X}")
-        self.assertEqual(bus.funcs, MOCK_I2C_FUNC)
+        self.assertEqual(bus.funcs, MOCK_I2C_FUNC_LIMITED)
         bus.close()
+
+        # Now try with full features:
+        with switch_to_full_featured_ioctl_mock():
+            bus = SMBus(1)
+            print(f"Supported I2C functionality: 0x{bus.funcs:X}")
+            self.assertEqual(bus.funcs, MOCK_I2C_FUNC_FULL)
+            bus.close()
 
     def test_enter_exit(self):
         for idx in (1, "/dev/i2c-alias"):
@@ -122,6 +178,9 @@ class TestSMBus(SMBusTestCase):
             self.assertIsNotNone(bus.fd)
             bus.close()
             self.assertIsNone(bus.fd)
+        bus = SMBus()
+        with self.assertRaises(TypeError):
+            bus.open([1, 2])
 
     def test_write(self):
         bus = SMBus(1)
@@ -129,10 +188,31 @@ class TestSMBus(SMBusTestCase):
         bus.write_byte(80, 0x001, force=False)
         # Write byte - force = True
         bus.write_byte(80, 0x001, force=True)
+        # Write byte data
+        bus.write_byte_data(80, 1, 0x001)
         # Write word data:
         bus.write_word_data(80, 1, 0x001, force=False)
         # Process call:
         self.assertEqual(bus.process_call(80, 1, 0x001), 1)
+        # Write block data:
+        bus.write_block_data(80, 1, [1, 2, 3])
+        with self.assertRaises(ValueError):
+            # Try writing too large of a block
+            x = [_ for _ in range(35)]
+            bus.write_block_data(80, 1, x)
+        # Write i2c block data:
+        bus.write_i2c_block_data(80, 1, [1, 2, 3])
+        with self.assertRaises(ValueError):
+            # Try writing too large of a block
+            x = [_ for _ in range(35)]
+            bus.write_i2c_block_data(80, 1, x)
+        # Block process call:
+        x = [_ for _ in range(8)]
+        self.assertEqual(bus.block_process_call(80, 1, x), x)
+        with self.assertRaises(ValueError):
+            # Try writing too large of a block
+            x = [_ for _ in range(35)]
+            bus.block_process_call(80, 1, x)
         bus.close()
 
     def test_read(self):
@@ -141,6 +221,7 @@ class TestSMBus(SMBusTestCase):
         res3 = []
         res4 = []
         res5 = []
+        res6 = []
 
         bus = SMBus(1)
 
@@ -157,12 +238,16 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(len(res2), 2, msg=INCORRECT_LENGTH_MSG)
         self.assertListEqual(res, res2, msg="Byte and word reads differ")
 
-        # Read block of N bytes
+        # Read block of N bytes (i2c)
         n = 2
         x = bus.read_i2c_block_data(80, 0, n)
         res3.extend(x)
         self.assertEqual(len(res3), n, msg=INCORRECT_LENGTH_MSG)
         self.assertListEqual(res, res3, msg="Byte and block reads differ")
+
+        # Check that reading too many bytes causes a ValueError:
+        with self.assertRaises(ValueError):
+            bus.read_i2c_block_data(80, 0, 35)
 
         # Read byte - force False
         for _ in range(2):
@@ -176,7 +261,118 @@ class TestSMBus(SMBusTestCase):
             res5.append(x)
         self.assertEqual(len(res5), 2, msg=INCORRECT_LENGTH_MSG)
 
+        # Read block of 32 bytes
+        x = bus.read_block_data(80, 0)
+        res6.extend(x)
+        self.assertEqual(len(res6), 32, msg=INCORRECT_LENGTH_MSG)
+        self.assertListEqual(res, res6[:2], msg="Byte and block reads differ")
+        self.assertEqual(
+            sum(res6), sum(_ for _ in range(32)), msg="Incorrect values from read_block_data"
+        )
+
         bus.close()
+
+    def test_write_full(self):
+        """
+        Test writes with 10bit + PEC enabled.
+        """
+        with switch_to_full_featured_ioctl_mock():
+            bus = SMBus(1)
+            bus.pec = 1
+            bus.tenbit = 1
+            # Write byte:
+            bus.write_byte(80, 0x001, force=False)
+            # Write byte - force = True
+            bus.write_byte(80, 0x001, force=True)
+            # Write byte data
+            bus.write_byte_data(80, 1, 0x001)
+            # Write word data:
+            bus.write_word_data(80, 1, 0x001, force=False)
+            # Process call:
+            self.assertEqual(bus.process_call(80, 1, 0x001), 1)
+            # Write block data:
+            bus.write_block_data(80, 1, [1, 2, 3])
+            with self.assertRaises(ValueError):
+                # Try writing too large of a block
+                x = [_ for _ in range(35)]
+                bus.write_block_data(80, 1, x)
+            # Write i2c block data:
+            bus.write_i2c_block_data(80, 1, [1, 2, 3])
+            with self.assertRaises(ValueError):
+                # Try writing too large of a block
+                x = [_ for _ in range(35)]
+                bus.write_i2c_block_data(80, 1, x)
+            # Block process call:
+            x = [_ for _ in range(8)]
+            self.assertEqual(bus.block_process_call(80, 1, x), x)
+            with self.assertRaises(ValueError):
+                # Try writing too large of a block
+                x = [_ for _ in range(35)]
+                bus.block_process_call(80, 1, x)
+            bus.close()
+
+    def test_read_full(self):
+        """
+        Test reads with 10bit + PEC enabled.
+        """
+        with switch_to_full_featured_ioctl_mock():
+            res = []
+            res2 = []
+            res3 = []
+            res4 = []
+            res5 = []
+            res6 = []
+
+            bus = SMBus(1)
+            bus.pec = 1
+            bus.tenbit = 1
+
+            # Read bytes
+            for k in range(2):
+                x = bus.read_byte_data(80, k)
+                res.append(x)
+            self.assertEqual(len(res), 2, msg=INCORRECT_LENGTH_MSG)
+
+            # Read word
+            x = bus.read_word_data(80, 0)
+            res2.append(x & 255)
+            res2.append(x / 256)
+            self.assertEqual(len(res2), 2, msg=INCORRECT_LENGTH_MSG)
+            self.assertListEqual(res, res2, msg="Byte and word reads differ")
+
+            # Read block of N bytes (i2c)
+            n = 2
+            x = bus.read_i2c_block_data(80, 0, n)
+            res3.extend(x)
+            self.assertEqual(len(res3), n, msg=INCORRECT_LENGTH_MSG)
+            self.assertListEqual(res, res3, msg="Byte and block reads differ")
+
+            # Check that reading too many bytes causes a ValueError:
+            with self.assertRaises(ValueError):
+                bus.read_i2c_block_data(80, 0, 35)
+
+            # Read byte - force False
+            for _ in range(2):
+                x = bus.read_byte(80, force=False)
+                res4.append(x)
+            self.assertEqual(len(res4), 2, msg=INCORRECT_LENGTH_MSG)
+
+            # Read byte - force True
+            for _ in range(2):
+                x = bus.read_byte(80, force=True)
+                res5.append(x)
+            self.assertEqual(len(res5), 2, msg=INCORRECT_LENGTH_MSG)
+
+            # Read block of 32 bytes
+            x = bus.read_block_data(80, 0)
+            res6.extend(x)
+            self.assertEqual(len(res6), 32, msg=INCORRECT_LENGTH_MSG)
+            self.assertListEqual(res, res6[:2], msg="Byte and block reads differ")
+            self.assertEqual(
+                sum(res6), sum(_ for _ in range(32)), msg="Incorrect values from read_block_data"
+            )
+
+            bus.close()
 
     def test_quick(self):
         bus = SMBus(1)
@@ -222,6 +418,15 @@ class TestSMBus(SMBusTestCase):
         bus.close()
         self.assertEqual(bus.pec, 0)
 
+        # Test true enable by changing ioctl mock:
+        with switch_to_full_featured_ioctl_mock():
+            bus = SMBus(1)
+            self.assertEqual(bus.pec, 0)
+            set_pec(bus, enable=True)
+            self.assertEqual(bus.pec, 1)
+        bus.close()
+        self.assertEqual(bus.pec, 0)
+
     def test_tenbit(self):
         def set_tenbit(bus, enable=True):
             bus.tenbit = enable
@@ -234,6 +439,15 @@ class TestSMBus(SMBusTestCase):
 
         bus._tenbit = 1
         self.assertEqual(bus.tenbit, 1)
+        bus.close()
+        self.assertEqual(bus.tenbit, 0)
+
+        # Test true enable by changing ioctl mock:
+        with switch_to_full_featured_ioctl_mock():
+            bus = SMBus(1)
+            self.assertEqual(bus.tenbit, 0)
+            set_tenbit(bus, enable=True)
+            self.assertEqual(bus.tenbit, 1)
         bus.close()
         self.assertEqual(bus.tenbit, 0)
 
