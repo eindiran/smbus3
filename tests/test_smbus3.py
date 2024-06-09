@@ -18,6 +18,7 @@ I2C_SMBUS_WRITE = 0
 I2C_SMBUS_READ = 1
 
 I2C_SMBUS_QUICK = 0
+I2C_SMBUS_BYTE = 1
 I2C_SMBUS_BYTE_DATA = 2
 I2C_SMBUS_WORD_DATA = 3
 I2C_SMBUS_BLOCK_DATA = 5
@@ -27,9 +28,18 @@ I2C_SMBUS_BLOCK_MAX = 32
 MOCK_FD = "Mock file descriptor"
 MOCK_I2C_FUNC_LIMITED = 0xEFF0001
 MOCK_I2C_FUNC_FULL = 0xEFF000B
+MOCK_MSG = None
 
 # Test buffer for read operations
 test_buffer = [x for x in range(256)]
+
+
+def mock_msg_refresh(msg):
+    """
+    Cleanup the mock msg used for writes.
+    """
+    global MOCK_MSG  # noqa
+    MOCK_MSG = msg
 
 
 # Mock open, close and ioctl so we can run our unit tests anywhere.
@@ -59,7 +69,9 @@ def mock_ioctl_limited(fd, command, msg):
     # Reproduce ioctl read operations
     if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_READ:
         offset = msg.command
-        if msg.size == I2C_SMBUS_BYTE_DATA:
+        if msg.size == I2C_SMBUS_BYTE:
+            msg.data.contents.byte = test_buffer[offset]
+        elif msg.size == I2C_SMBUS_BYTE_DATA:
             msg.data.contents.byte = test_buffer[offset]
         elif msg.size == I2C_SMBUS_WORD_DATA:
             msg.data.contents.word = test_buffer[offset + 1] * 256 + test_buffer[offset]
@@ -70,6 +82,10 @@ def mock_ioctl_limited(fd, command, msg):
             msg.data.contents.block[0] = 32
             for k in range(32):
                 msg.data.contents.block[k + 1] = test_buffer[offset + k]
+
+    # Reproduce ioctl write operations
+    if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_WRITE:
+        mock_msg_refresh(msg)
 
     # Reproduce a failing Quick write transaction
     if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_WRITE and msg.size == I2C_SMBUS_QUICK:
@@ -103,6 +119,10 @@ def mock_ioctl_full(fd, command, msg):
             msg.data.contents.block[0] = 32
             for k in range(32):
                 msg.data.contents.block[k + 1] = test_buffer[offset + k]
+
+    # Reproduce ioctl write operations
+    if command == I2C_SMBUS and msg.read_write == I2C_SMBUS_WRITE:
+        mock_msg_refresh(msg)
 
 
 # Override open, close, read, and ioctl with our mock functions
@@ -182,26 +202,66 @@ class TestSMBus(SMBusTestCase):
         with self.assertRaises(TypeError):
             bus.open([1, 2])
 
-    def test_write(self):
+    def test_write(self):  # noqa: PLR0915
         bus = SMBus(1)
         # Write byte:
         bus.write_byte(80, 0x001, force=False)
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 1)
+        mock_msg_refresh(None)
         # Write byte - force = True
         bus.write_byte(80, 0x001, force=True)
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 1)
+        mock_msg_refresh(None)
         # Write byte data
         bus.write_byte_data(80, 1, 0x001)
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 2)
+        self.assertEqual(MOCK_MSG.data.contents.byte, 1)
+        self.assertEqual(MOCK_MSG.data.contents.word, 1)
+        mock_msg_refresh(None)
         # Write word data:
         bus.write_word_data(80, 1, 0x001, force=False)
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 3)
+        self.assertEqual(MOCK_MSG.data.contents.byte, 1)
+        self.assertEqual(MOCK_MSG.data.contents.word, 1)
+        mock_msg_refresh(None)
         # Process call:
         self.assertEqual(bus.process_call(80, 1, 0x001), 1)
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 4)
+        self.assertEqual(MOCK_MSG.data.contents.byte, 1)
+        self.assertEqual(MOCK_MSG.data.contents.word, 1)
+        mock_msg_refresh(None)
         # Write block data:
         bus.write_block_data(80, 1, [1, 2, 3])
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 5)
+        self.assertEqual(MOCK_MSG.data.contents.byte, 3)
+        self.assertEqual(MOCK_MSG.data.contents.word, 256 + 3)
+        self.assertListEqual(list(MOCK_MSG.data.contents.block[1:4]), [1, 2, 3])
+        mock_msg_refresh(None)
         with self.assertRaises(ValueError):
             # Try writing too large of a block
             x = [_ for _ in range(35)]
             bus.write_block_data(80, 1, x)
         # Write i2c block data:
         bus.write_i2c_block_data(80, 1, [1, 2, 3])
+        self.assertEqual(MOCK_MSG.read_write, 0)
+        self.assertEqual(MOCK_MSG.command, 1)
+        self.assertEqual(MOCK_MSG.size, 8)
+        self.assertEqual(MOCK_MSG.data.contents.byte, 3)
+        self.assertEqual(MOCK_MSG.data.contents.word, 256 + 3)
+        self.assertListEqual(list(MOCK_MSG.data.contents.block[1:4]), [1, 2, 3])
+        mock_msg_refresh(None)
         with self.assertRaises(ValueError):
             # Try writing too large of a block
             x = [_ for _ in range(35)]
