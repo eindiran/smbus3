@@ -43,14 +43,6 @@ def mock_close(*args):
     assert args[0] == MOCK_FD
 
 
-def mock_read(fd, length):
-    print(f"Mocking read with length {length}")
-    assert fd == MOCK_FD
-    val = bytes(test_buffer[0:length])
-    print(f"Read mock is returning test_buffer: {val}")
-    return val
-
-
 def mock_ioctl(fd, command, msg):
     print(f"Mocking ioctl with command 0x{command:X} and msg {msg}")
     assert fd == MOCK_FD
@@ -82,7 +74,6 @@ def mock_ioctl(fd, command, msg):
 # Override open, close, read, and ioctl with our mock functions
 open_mock = mock.patch("smbus3.smbus3.os.open", mock_open)
 close_mock = mock.patch("smbus3.smbus3.os.close", mock_close)
-read_mock = mock.patch("smbus3.smbus3.os.read", mock_read)
 ioctl_mock = mock.patch("smbus3.smbus3.ioctl", mock_ioctl)
 ##########################################################################
 
@@ -94,13 +85,11 @@ class SMBusTestCase(unittest.TestCase):
     def setUp(self):
         open_mock.start()
         close_mock.start()
-        read_mock.start()
         ioctl_mock.start()
 
     def tearDown(self):
         open_mock.stop()
         close_mock.stop()
-        read_mock.stop()
         ioctl_mock.stop()
 
 
@@ -133,10 +122,24 @@ class TestSMBus(SMBusTestCase):
             bus.close()
             self.assertIsNone(bus.fd)
 
+    def test_write(self):
+        bus = SMBus(1)
+        # Write byte:
+        bus.write_byte(80, 0x001, force=False)
+        # Write byte - force = True
+        bus.write_byte(80, 0x001, force=True)
+        # Write word data:
+        bus.write_word_data(80, 1, 0x001, force=False)
+        # Process call:
+        self.assertEqual(bus.process_call(80, 1, 0x001), 1)
+        bus.close()
+
     def test_read(self):
         res = []
         res2 = []
         res3 = []
+        res4 = []
+        res5 = []
 
         bus = SMBus(1)
 
@@ -159,6 +162,18 @@ class TestSMBus(SMBusTestCase):
         res3.extend(x)
         self.assertEqual(len(res3), n, msg=INCORRECT_LENGTH_MSG)
         self.assertListEqual(res, res3, msg="Byte and block reads differ")
+
+        # Read byte - force False
+        for _ in range(2):
+            x = bus.read_byte(80, force=False)
+            res4.append(x)
+        self.assertEqual(len(res4), 2, msg=INCORRECT_LENGTH_MSG)
+
+        # Read byte - force True
+        for _ in range(2):
+            x = bus.read_byte(80, force=True)
+            res5.append(x)
+        self.assertEqual(len(res5), 2, msg=INCORRECT_LENGTH_MSG)
 
         bus.close()
 
@@ -223,7 +238,20 @@ class TestSMBusWrapper(SMBusTestCase):
 
 
 class TestI2CMsg(SMBusTestCase):
-    def test_i2c_msg(self):
+    def test_i2c_msg_rd(self):
+        # 1: Convert message content to list
+        msg = i2c_msg.read(60, 10)
+        self.assertEqual(len(list(msg)), 10)
+
+        # 2: Test dunder methods
+        print(f"Testing dunder methods for i2c_msg: {msg.__repr__()}")
+        self.assertEqual(str(msg), "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+        self.assertEqual(
+            repr(msg), "i2c_msg(60,1,b'\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00')"
+        )
+        self.assertEqual(bytes(msg), b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+
+    def test_i2c_msg_wr(self):
         # 1: Convert message content to list
         msg = i2c_msg.write(60, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
         data = list(msg)
@@ -245,3 +273,69 @@ class TestI2CMsg(SMBusTestCase):
         k += 1  # Convert to length
         self.assertEqual(k, 10, msg="Incorrect length")
         self.assertEqual(s, 55, msg="Incorrect sum")
+
+        # 4: Test dunder methods
+        print(f"Testing dunder methods for i2c_msg: {msg.__repr__()}")
+        self.assertEqual(str(msg), "\x01\x02\x03\x04\x05\x06\x07\x08\t\n")
+        self.assertEqual(
+            repr(msg), "i2c_msg(60,0,b'\\x01\\x02\\x03\\x04\\x05\\x06\\x07\\x08\\t\\n')"
+        )
+        self.assertEqual(bytes(msg), b"\x01\x02\x03\x04\x05\x06\x07\x08\t\n")
+
+    def test_i2c_msg_wr_str(self):
+        # 1: Convert message content to list
+        msg = i2c_msg.write(60, "foo")
+        data = list(msg)
+        self.assertEqual(len(data), 3)
+
+        # 2: i2c_msg is iterable
+        k = 0
+        s = 0
+        for value in msg:
+            k += 1
+            s += value
+        self.assertEqual(k, 3, msg="Incorrect length")
+        self.assertEqual(s, 324, msg="Incorrect sum")
+
+        # 3: Through i2c_msg properties
+        s = 0
+        for k in range(0, msg.len):
+            s += ord(msg.buf[k])
+        k += 1  # Convert to length
+        self.assertEqual(k, 3, msg="Incorrect length")
+        self.assertEqual(s, 324, msg="Incorrect sum")
+
+        # 4: Test dunder methods
+        print(f"Testing dunder methods for i2c_msg: {msg.__repr__()}")
+        self.assertEqual(str(msg), "foo")
+        self.assertEqual(repr(msg), "i2c_msg(60,0,b'foo')")
+        self.assertEqual(bytes(msg), b"foo")
+
+
+class TestI2CMsgRDWR(SMBusTestCase):
+    def test_i2c_rdwr_single_rd(self):
+        msg = i2c_msg.read(60, 10)
+        self.assertEqual(len(list(msg)), 10)
+        with SMBus(1) as bus:
+            bus.i2c_rdwr(msg)
+
+    def test_i2c_rdwr_single_wr(self):
+        msg = i2c_msg.write(60, "foo")
+        with SMBus(1) as bus:
+            bus.i2c_rdwr(msg)
+
+    def test_i2c_rdwr_multi(self):
+        msg1 = i2c_msg.read(60, 10)
+        msg2 = i2c_msg.write(60, "foo")
+        msg3 = i2c_msg.write(60, "bar")
+        msg4 = i2c_msg.write(60, "baz")
+        with SMBus(1) as bus:
+            bus.i2c_rdwr(msg1, msg2, msg3, msg4)
+
+    def test_i2c_rd(self):
+        with SMBus(1) as bus:
+            bus.i2c_rd(60, 10)
+
+    def test_i2c_wr(self):
+        with SMBus(1) as bus:
+            bus.i2c_wr(60, [1, 2, 3])
