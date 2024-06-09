@@ -246,3 +246,7 @@ Currently available targets:
   - `test`
   - `typecheck`
   - `venv`
+
+# Acknowledgements
+
+This project is built entirely on the foundation of [smbus2](https://github.com/kplindegaard/smbus2) and Karl-Petter Lindegaard (@kplindegaard) did.
