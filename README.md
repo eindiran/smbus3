@@ -1,15 +1,10 @@
 # smbus3
 A drop-in replacement for smbus2, smbus-cffi, or smbus-python written in pure Python and intended for use with Python 3.9+.
 
-This library was originally forked from @kplindegaard's excellent [smbus2](https://github.com/kplindegaard/smbus2). If you need a package that works with Python 2.7 - 3.8, smbus2 is the way to go.
+This library was forked from @kplindegaard's excellent [smbus2](https://github.com/kplindegaard/smbus2). If you need a package that works with Python 2.7 - 3.8, smbus2 is the way to go.
 
 [![Build Status](https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master)](https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml)
-[![Documentation Status](https://readthedocs.org/projects/smbus2/badge/?version=latest)](http://smbus2.readthedocs.io/en/latest/?badge=latest)
 ![CodeQL](https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kplindegaard_smbus2&metric=alert_status)](https://sonarcloud.io/dashboard?id=kplindegaard_smbus2)
-![Python Verions](https://img.shields.io/pypi/pyversions/smbus2.svg)
-[![PyPi Version](https://img.shields.io/pypi/v/smbus2.svg)](https://pypi.org/project/smbus2/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/smbus2)](https://pypi.org/project/smbus2/)
 
 # Introduction
 
@@ -214,18 +209,6 @@ with SMBus(1) as bus:
 ```
 
 # Installation instructions
-
-From [PyPi](https://pypi.org/) with `pip`:
-
-```
-pip3 install smbus3
-```
-
-From [conda-forge](https://anaconda.org/conda-forge) using `conda`:
-
-```
-conda install -c conda-forge smbus3
-```
 
 Installation from source code is straight forward:
 
