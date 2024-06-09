@@ -5,7 +5,6 @@ smbus3 - A drop-in replacement for smbus2/smbus-cffi/smbus-python
 import os
 from ctypes import (
     POINTER,
-    Array,
     Structure,
     Union,
     c_char,
@@ -15,6 +14,7 @@ from ctypes import (
     create_string_buffer,
     string_at,
 )
+from enum import IntFlag
 from fcntl import ioctl
 
 # Commands from uapi/linux/i2c-dev.h
@@ -48,7 +48,6 @@ I2C_SMBUS_I2C_BLOCK_DATA = 8
 I2C_SMBUS_BLOCK_MAX = 32
 
 # To determine what functionality is present (uapi/linux/i2c.h)
-from enum import IntFlag
 
 
 class I2cFunc(IntFlag):
@@ -112,21 +111,14 @@ LP_c_uint16 = POINTER(c_uint16)
 LP_c_uint32 = POINTER(c_uint32)
 
 
-#############################################################
-# Type definitions as in i2c.h
+i2c_smbus_data = c_uint8 * (I2C_SMBUS_BLOCK_MAX + 2)
+"""
+Adaptation of the i2c_smbus_data union in ``i2c.h``.
+Data for SMBus messages.
 
-
-class i2c_smbus_data(Array):
-    """
-    Adaptation of the i2c_smbus_data union in ``i2c.h``.
-
-    Data for SMBus messages.
-    """
-
-    _length_ = I2C_SMBUS_BLOCK_MAX + 2
-    # Add two additional blocks, one for length, one for user-space
-    # compatibility.
-    _type_ = c_uint8
+Add two additional blocks, one for length, one for user-space
+compatibility.
+"""
 
 
 class union_i2c_smbus_data(Union):
@@ -165,10 +157,6 @@ class i2c_smbus_ioctl_data(Structure):
             size=size,
             data=union_pointer_type(u),
         )
-
-
-#############################################################
-# Type definitions for i2c_rdwr combined transactions
 
 
 class i2c_msg(Structure):
@@ -289,9 +277,6 @@ class i2c_rdwr_ioctl_data(Structure):
         n_msg = len(i2c_msg_instances)
         msg_array = (i2c_msg * n_msg)(*i2c_msg_instances)
         return i2c_rdwr_ioctl_data(msgs=msg_array, nmsgs=n_msg)
-
-
-#############################################################
 
 
 class SMBus:
