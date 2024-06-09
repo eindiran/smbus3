@@ -45,6 +45,10 @@ It is developed for Python 3.9+.
 
 More information about updates and general changes are recorded in the [change log](https://github.com/eindiran/smbus3/blob/master/CHANGELOG.md).
 
+**NOTE:** this library leverages the `ioctl` syscall on Unix-like operating systems. It **WILL NOT** work on Windows and Windows will likely never be supported.
+
+OSes leveraging the Linux kernel are the primary testbed for the library, but if you try it out on macOS or *BSD and find a bug or problem, please open an issue.
+
 # SMBus code examples
 
 smbus3 installs next to smbus as the package, so it's not really a 100% replacement. You must change the module name.
