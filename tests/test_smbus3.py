@@ -245,6 +245,10 @@ class TestSMBus(SMBusTestCase):
         self.assertEqual(len(res3), n, msg=INCORRECT_LENGTH_MSG)
         self.assertListEqual(res, res3, msg="Byte and block reads differ")
 
+        # Check that reading too many bytes causes a ValueError:
+        with self.assertRaises(ValueError):
+            bus.read_i2c_block_data(80, 0, 35)
+
         # Read byte - force False
         for _ in range(2):
             x = bus.read_byte(80, force=False)
@@ -342,6 +346,10 @@ class TestSMBus(SMBusTestCase):
             res3.extend(x)
             self.assertEqual(len(res3), n, msg=INCORRECT_LENGTH_MSG)
             self.assertListEqual(res, res3, msg="Byte and block reads differ")
+
+            # Check that reading too many bytes causes a ValueError:
+            with self.assertRaises(ValueError):
+                bus.read_i2c_block_data(80, 0, 35)
 
             # Read byte - force False
             for _ in range(2):
