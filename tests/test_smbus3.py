@@ -181,6 +181,18 @@ class TestSMBus(SMBusTestCase):
         bus = SMBus(1)
         self.assertRaises(IOError, bus.write_quick, 80)
 
+    def test_timeout(self):
+        def set_timeout(bus, timeout=15):
+            bus.timeout = timeout
+
+        bus = SMBus(1)
+        set_timeout(bus)
+
+        self.assertEqual(bus._timeout, 15)
+        self.assertEqual(bus._get_timeout(), 15)
+        self.assertEqual(bus.timeout, 15)
+        bus.close()
+
     def test_pec(self):
         def set_pec(bus, enable=True):
             bus.pec = enable
