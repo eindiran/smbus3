@@ -2,12 +2,12 @@ name: "CodeQL Analysis"
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ master ]
+    branches: [master]
   schedule:
-    - cron: '22 01 * * 1,4'
+    - cron: "22 01 * * 1,4"
 
 jobs:
   analyze:
@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python' ]
+        language: ["python"]
     permissions:
       pull-requests: write
       contents: read
@@ -26,15 +26,15 @@ jobs:
       actions: read
     timeout-minutes: 360
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      # Initializes the CodeQL tools for scanning.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

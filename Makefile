@@ -74,6 +74,11 @@ coverage_html_report: test
 coverage_xml_report: test
 	. .venv/bin/activate; coverage xml
 
+.PHONY: _echo_coverage_total
+_echo_coverage_total:
+	@. .venv/bin/activate; coverage json --quiet; python -c "import json; f = open('coverage.json'); s = f.read(); x = json.loads(s); print(x['totals']['percent_covered_display']); f.close()"
+	@rm -rf coverage.json
+
 # Build the docs:
 docs: docs_html docs_man_page
 
