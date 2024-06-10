@@ -35,7 +35,7 @@ jobs:
         run: |
           COVERAGE="$( make _echo_coverage_total )"
           echo "##[set-output name=lines;]${COVERAGE}%"
-          echo "##[set-output name=coverage;]${COVERAGE}"
+          echo "coverage=${COVERAGE}" >> "$GITHUB_OUTPUT"
       - name: Generate badge
         uses: emibcn/badge-action@v2.0.2
         with:
