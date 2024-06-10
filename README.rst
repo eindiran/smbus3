@@ -1,5 +1,4 @@
 .. image:: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master
-   :target: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml
 .. image:: https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master
 .. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/license/MIT
