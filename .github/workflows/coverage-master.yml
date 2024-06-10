@@ -1,4 +1,4 @@
-name: "Generate test coverage report"
+name: "Generate test coverage badge"
 on:
   push:
     branches:
@@ -12,8 +12,12 @@ jobs:
         python-version: ["3.12"]
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
