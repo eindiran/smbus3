@@ -47,3 +47,24 @@ jobs:
             steps.coverage.outputs.coverage > 20 && 'red,red,red,orange' ||
             'red' }}
           path: ".github/badges/coverage.svg"
+      - name: Upload badge as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: badge
+          path: ".github/badges/coverage.svg"
+          if-no-files-found: error
+      - name: Commit badge
+        continue-on-error: true
+        env:
+          BADGE: ".github/badges/coverage.svg"
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add "${BADGE}"
+          git commit -m "Add/Update badge"
+      - name: Push badge commit
+        uses: ad-m/github-push-action@master
+        if: ${{ success() }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: badge
