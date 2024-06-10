@@ -1,5 +1,10 @@
 .. image:: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master
+   :alt: Build and tests
 .. image:: https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master
+   :alt: CodeQL security analysis
+.. image:: https://readthedocs.org/projects/smbus3/badge/?version=latest
+   :target: https://smbus3.readthedocs.io/en/latest/
+   :alt: Documentation
 .. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/license/MIT
    :alt: MIT
