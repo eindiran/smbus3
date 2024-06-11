@@ -119,8 +119,10 @@ buildpkg: clean venv precommit format lint test typecheck check_coverage
 	. .venv/bin/activate; python setup.py sdist
 	. .venv/bin/activate; python setup.py bdist_wheel --universal
 
-# Test built package:
+# Test built package
+# NOTE: we do the `cd` hack here to get around this issue:
+# https://stackoverflow.com/questions/37941523
 .PHONY: testpkg
 testpkg: buildpkg
-	. .venv/bin/activate; pip uninstall smbus3; pip install dist/smbus3-*.whl
+	. .venv/bin/activate; cd .venv && pip uninstall --yes smbus3 && cd ..; pip install dist/smbus3-*.whl
 	make test
