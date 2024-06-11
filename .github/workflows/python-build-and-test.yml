@@ -42,4 +42,4 @@ jobs:
           mypy . --exclude "build/"
       - name: Test with unittest
         run: |
-          python3 -m unittest tests/*.py
+          python3 -m unittest tests
