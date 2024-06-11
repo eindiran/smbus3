@@ -55,7 +55,7 @@ clean: softclean
 # Run the tests:
 .PHONY: test
 test: venv
-	. .venv/bin/activate; coverage run -m unittest tests/test_datatypes.py; coverage run -m unittest tests/test_smbus3.py
+	. .venv/bin/activate; coverage run -m unittest tests
 
 # Typecheck the stub files with mypy
 .PHONY: typecheck
