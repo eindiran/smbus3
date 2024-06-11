@@ -36,6 +36,7 @@ venv: .venv/touchfile
 .PHONY: softclean
 softclean:
 	rm -rf smbus3.egg-info
+	rm -rf dist
 	rm -rf build
 	rm -rf .ruff_cache
 	rm -rf .mypy_cache
@@ -79,6 +80,10 @@ _echo_coverage_total:
 	@. .venv/bin/activate; coverage json --quiet; python -c "import json; f = open('coverage.json'); s = f.read(); x = json.loads(s); print(x['totals']['percent_covered_display']); f.close()"
 	@rm -rf coverage.json
 
+.PHONY: check_coverage
+check_coverage: test
+	@if (( $$(make _echo_coverage_total) < 90 )); then exit 1; else echo "Coverage percentage >=90"; fi
+
 # Build the docs:
 docs: docs_html docs_man_page
 
@@ -107,3 +112,15 @@ format: venv .ruff.toml
 .PHONY: lint
 lint: venv format .ruff.toml
 	. .venv/bin/activate; ruff check --fix .
+
+# Build the package:
+.PHONY: buildpkg
+buildpkg: clean venv precommit format lint test typecheck check_coverage
+	. .venv/bin/activate; python setup.py sdist
+	. .venv/bin/activate; python setup.py bdist_wheel --universal
+
+# Test built package:
+.PHONY: testpkg
+testpkg: buildpkg
+	. .venv/bin/activate; pip uninstall smbus3; pip install dist/smbus3-*.whl
+	make test
