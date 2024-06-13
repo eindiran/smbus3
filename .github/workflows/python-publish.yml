@@ -1,8 +1,6 @@
 name: Upload Python Package to PyPI
 
 on:
-  push:
-    branches: ["master"]
   release:
     types: ["published"]
 
