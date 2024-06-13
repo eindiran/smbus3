@@ -8,6 +8,7 @@ recorded here.
 --------------------
 
 - Documentation updates.
+- Remove MANIFEST.in
 
 [0.5.0] - 2024-06-13
 --------------------

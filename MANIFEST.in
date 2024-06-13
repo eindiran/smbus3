@@ -1,4 +1,0 @@
-include doc/changelog.rst
-include doc/license.rst
-include README.rst
-graft tests
