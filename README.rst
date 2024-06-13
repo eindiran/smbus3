@@ -10,6 +10,11 @@
 .. image:: https://raw.githubusercontent.com/eindiran/smbus3/badges/.github/badges/coverage.svg
    :target: https://github.com/eindiran/smbus3/actions/workflows/coverage-master.yml
    :alt: Test coverage on master
+.. image:: https://img.shields.io/pypi/pyversions/smbus3.svg
+   :alt: Python versions
+.. image:: https://img.shields.io/pypi/v/smbus3.svg
+   :target: ttps://pypi.org/project/smbus3/
+   :alt: PyPI package
 .. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/license/MIT
    :alt: MIT
