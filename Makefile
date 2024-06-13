@@ -137,7 +137,7 @@ lint: venv format .ruff.toml
 .PHONY: buildpkg
 buildpkg: clean venv precommit format lint test typecheck check_coverage
 	@echo "\n\033[0;32mBuilding source distribution and wheel\033[0m\n"
-	. .venv/bin/activate; python -m build
+	. .venv/bin/activate; python -m build --sdist --wheel
 	@echo "\n\033[0;32mBuild complete!\033[0m\n"
 
 # Test built package
@@ -148,3 +148,11 @@ testpkg: buildpkg
 	@echo "\n\033[0;32mRunning tests with installed .whl\033[0m\n"
 	make test
 	@echo "\n\033[0;32mSuccess! Tests with .whl passed!\033[0m\n"
+
+.PHONY: testreleased
+testreleased: clean venv
+	@echo "\n\033[0;32mInstalling released PyPI package\033[0m\n"
+	. .venv/bin/activate; pip install smbus3
+	@echo "\n\033[0;32mRunning tests with installed package\033[0m\n"
+	make test
+	@echo "\n\033[0;32mSuccess! Tests with PyPI package passed!\033[0m\n"
