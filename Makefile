@@ -136,10 +136,8 @@ lint: venv format .ruff.toml
 # Build the package:
 .PHONY: buildpkg
 buildpkg: clean venv precommit format lint test typecheck check_coverage
-	@echo "\n\033[0;32mBuilding source distribution\033[0m\n"
-	. .venv/bin/activate; python setup.py sdist
-	@echo "\n\033[0;32mBuilding universal .whl\033[0m\n"
-	. .venv/bin/activate; python setup.py bdist_wheel --universal
+	@echo "\n\033[0;32mBuilding source distribution and wheel\033[0m\n"
+	. .venv/bin/activate; python -m build
 	@echo "\n\033[0;32mBuild complete!\033[0m\n"
 
 # Test built package
