@@ -379,6 +379,8 @@ tasks:
 Currently available targets:
 
 -  ``all``: softclean the directory, then create the venv if it doesn’t exist, and run all common development tasks (install commit hooks, lint, format, typecheck, coverage, and then build documentation).
+-  ``buildpkg``: hardclean the directory, then run pre-build tests, then build the ``.whl``
+-  ``check_coverage``: check current test coverage, fails if below 90%
 -  ``clean``: fully clean repo dir, including artifacts and ``.venv``
 -  ``coverage``: generate coverage info on the CLI
 -  ``coverage_html_report``: generate coverage info as an HTML document
@@ -391,8 +393,11 @@ Currently available targets:
 -  ``precommit``: install precommit hooks
 -  ``softclean``: clean up artifacts without removing ``.venv``
 -  ``test``: run the unit tests
+-  ``testpkg``: hardclean, ``buildpkg``, then install and test with the installed version
+-  ``testreleased``: install released version of the package with ``pip``, then run tests
 -  ``typecheck``: run mypy typechecking on the smbus3 library
 -  ``venv``: build a venv
+
 
 Acknowledgements
 ----------------
