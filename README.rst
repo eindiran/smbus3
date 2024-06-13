@@ -47,10 +47,20 @@ shared for backwards compatibility with ``smbus2``.
 
 Currently supported features are:
 
--  Get i2c capabilities (``I2C_FUNCS``)
+-  Context manager-like control of ``SMBus`` objects
 -  SMBus Packet Error Checking (PEC) support
+
+  -  ``enable_pec()``
+
 -  10bit addressing support
+
+  -  ``enable_tenbit()``
+
 -  Manual control over retries and timeouts
+
+  -  ``set_retries()``
+  -  ``set_timeout()``
+
 -  Create raw ``i2c_msg`` messages
 -  ``read_byte()``
 -  ``write_byte()``
@@ -69,6 +79,7 @@ Currently supported features are:
    start*
 -  ``i2c_rd()`` - single read via ``i2c_rdwr``
 -  ``i2c_wr()`` - single write via ``i2c_rdwr``
+-  Get i2c capabilities (``I2C_FUNCS``)
 
 It is developed for Python 3.9+.
 
@@ -82,7 +93,7 @@ never be supported.
 
 OSes leveraging the Linux kernel are the primary testbed for the
 library, but if you try it out on \*BSD and find a bug or problem,
-please open an issue.
+please `open an issue <https://github.com/eindiran/smbus3/issues>`__.
 
 SMBus code examples
 -------------------

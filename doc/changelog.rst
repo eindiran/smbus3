@@ -4,6 +4,11 @@ Changelog
 Notable changes to `smbus3 <https://github.com/eindiran/smbus3>`__ are
 recorded here.
 
+[0.5.1] - 2024-06-13
+--------------------
+
+- Documentation updates.
+
 [0.5.0] - 2024-06-13
 --------------------
 
