@@ -337,11 +337,18 @@ access alternatives.
 Installation
 ------------
 
+To install from PyPI, use ``pip``:
+
+::
+
+    pip3 install smbus3
+
+
 To install from source, simply run the following command from the top of the repo:
 
 ::
 
-    pip install .
+    pip3 install .
 
 Local development
 -----------------
