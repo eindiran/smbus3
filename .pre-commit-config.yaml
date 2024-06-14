@@ -9,3 +9,7 @@ repos:
       # Linter
       - id: ruff
         args: [--fix]
+  - repo: https://github.com/mpalmer/action-validator
+    rev: v0.5.1
+    hooks:
+      - id: action-validator

@@ -27,12 +27,26 @@ all: softclean venv precommit format lint test typecheck coverage coverage_html_
 # Tracked via a touchfile
 venv: .venv/touchfile
 
-.venv/touchfile: requirements_dev.txt setup.py
+.venv/touchfile: requirements_dev.txt setup.py setup.cfg
 	@echo "\n\033[0;32mSetting up venv\033[0m\n"
 	test -d .venv || python3 -m venv .venv
 	. .venv/bin/activate; pip install -r requirements_dev.txt; pip install .
 	touch .venv/touchfile
 	@echo "\n\033[0;32mvenv complete\033[0m\n"
+
+# Force clearing the pip cache
+.PHONY: _pip_cache_purge
+_pip_cache_purge: venv
+	@echo "\n\033[0;32mClearing venv pip cache\033[0m\n"
+	. .venv/bin/activate; pip cache purge
+	@echo "\n\033[0;32mvenv pip cache purge complete\033[0m\n"
+
+# Uninstall venv version of smbus3
+.PHONY: _uninstall_smbus3
+_uninstall_smbus3: venv
+	@echo "\n\033[0;32mUninstalling venv local 'smbus3'\033[0m\n"
+	. .venv/bin/activate; pip uninstall --yes smbus3
+	@echo "\n\033[0;32mvenv smbus3 uninstall complete\033[0m\n"
 
 # Cleanup artifacts without changing venv
 .PHONY: softclean
@@ -66,7 +80,7 @@ test: venv
 .PHONY: typecheck
 typecheck: venv
 	@echo "\n\033[0;32mTypechecking with mypy\033[0m\n"
-	. .venv/bin/activate; mypy . --exclude "build/"
+	. .venv/bin/activate; mypy . --exclude "build/" --exclude "dist/"
 	@echo "\n\033[0;32mTypechecking complete\033[0m\n"
 
 .PHONY: coverage
@@ -133,26 +147,40 @@ lint: venv format .ruff.toml
 	. .venv/bin/activate; ruff check --fix .
 	@echo "\n\033[0;32mLinting complete!\033[0m\n"
 
-# Build the package:
+# Build the source distribution only:
+.PHONY: buildsdist
+buildsdist: clean venv precommit format lint test typecheck check_coverage
+	@echo "\n\033[0;32mBuilding source distribution (only)\033[0m\n"
+	. .venv/bin/activate; python -m build --sdist
+	@echo "\n\033[0;32mSource distribution build complete!\033[0m\n"
+
+# Build the wheel binary distribution only:
+.PHONY: buildwhl
+buildwhl: clean venv precommit format lint test typecheck check_coverage
+	@echo "\n\033[0;32mBuilding wheel (only)\033[0m\n"
+	. .venv/bin/activate; python -m build --wheel
+	@echo "\n\033[0;32mWheel build complete!\033[0m\n"
+
+# Build the package (sdist AND wheel):
 .PHONY: buildpkg
 buildpkg: clean venv precommit format lint test typecheck check_coverage
 	@echo "\n\033[0;32mBuilding source distribution and wheel\033[0m\n"
-	. .venv/bin/activate; python -m build --sdist --wheel
+	. .venv/bin/activate; python -m build
 	@echo "\n\033[0;32mBuild complete!\033[0m\n"
 
 # Test built package
 .PHONY: testpkg
-testpkg: buildpkg
+testpkg: buildpkg _pip_cache_purge _uninstall_smbus3
 	@echo "\n\033[0;32mInstalling built .whl\033[0m\n"
-	. .venv/bin/activate; pip uninstall --yes smbus3; pip install dist/smbus3-*.whl
+	. .venv/bin/activate; pip install dist/smbus3-*.whl
 	@echo "\n\033[0;32mRunning tests with installed .whl\033[0m\n"
 	make test
 	@echo "\n\033[0;32mSuccess! Tests with .whl passed!\033[0m\n"
 
 .PHONY: testreleased
-testreleased: venv
+testreleased: venv _pip_cache_purge _uninstall_smbus3
 	@echo "\n\033[0;32mInstalling released PyPI package\033[0m\n"
-	. .venv/bin/activate; pip cache purge; pip uninstall --yes smbus3; pip install --no-cache-dir smbus3
+	. .venv/bin/activate; pip install --no-cache-dir smbus3
 	@echo "\n\033[0;32mRunning tests with installed package\033[0m\n"
 	make test
 	@echo "\n\033[0;32mSuccess! Tests with PyPI package passed!\033[0m\n"
