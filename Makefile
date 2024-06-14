@@ -150,9 +150,9 @@ testpkg: buildpkg
 	@echo "\n\033[0;32mSuccess! Tests with .whl passed!\033[0m\n"
 
 .PHONY: testreleased
-testreleased: clean venv
+testreleased: venv
 	@echo "\n\033[0;32mInstalling released PyPI package\033[0m\n"
-	. .venv/bin/activate; pip install smbus3
+	. .venv/bin/activate; pip cache purge; pip uninstall --yes smbus3; pip install --no-cache-dir smbus3
 	@echo "\n\033[0;32mRunning tests with installed package\033[0m\n"
 	make test
 	@echo "\n\033[0;32mSuccess! Tests with PyPI package passed!\033[0m\n"
