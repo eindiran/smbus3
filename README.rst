@@ -380,6 +380,8 @@ Currently available targets:
 
 -  ``all``: softclean the directory, then create the venv if it doesn’t exist, and run all common development tasks (install commit hooks, lint, format, typecheck, coverage, and then build documentation).
 -  ``buildpkg``: hardclean the directory, then run pre-build tests, then build the ``.whl``
+-  ``buildsdist``: build source distribution only
+-  ``buildwhl``: build wheel binary distribution only
 -  ``check_coverage``: check current test coverage, fails if below 90%
 -  ``clean``: fully clean repo dir, including artifacts and ``.venv``
 -  ``coverage``: generate coverage info on the CLI
