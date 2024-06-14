@@ -8,5 +8,5 @@ collect the tests from the top directory.
 from .test_datatypes import TestDataTypes
 from .test_smbus3 import TestI2CMsg, TestI2CMsgRDWR, TestSMBus, TestSMBusWrapper
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __all__ = ["TestDataTypes", "TestI2CMsg", "TestI2CMsgRDWR", "TestSMBus", "TestSMBusWrapper"]

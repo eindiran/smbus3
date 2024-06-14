@@ -4,6 +4,12 @@ Changelog
 Notable changes to `smbus3 <https://github.com/eindiran/smbus3>`__ are
 recorded here.
 
+[0.5.3] - 2024-06-13
+--------------------
+
+- Fix broken ``setup.cfg``
+- Purge ``pip`` cache on ``testreleased``
+
 [0.5.2] - 2024-06-13
 --------------------
 
