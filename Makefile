@@ -29,7 +29,7 @@ venv: .venv/touchfile
 
 .venv/touchfile: requirements_dev.txt setup.py setup.cfg
 	@echo "\n\033[0;32mSetting up venv\033[0m\n"
-	test -d .venv || python3 -m venv .venv
+	test -d .venv || python3.8 -m venv .venv
 	. .venv/bin/activate; pip install -r requirements_dev.txt; pip install .
 	touch .venv/touchfile
 	@echo "\n\033[0;32mvenv complete\033[0m\n"

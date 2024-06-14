@@ -1,9 +1,9 @@
 build==1.2.1
 coverage==7.5.3
 mypy==1.10.0
-pre-commit==3.7.1
+pre-commit
 ruff==0.4.8
 setuptools==70.0.0
-sphinx==7.3.7
+sphinx
 twine==5.1.0
 wheel==0.43.0
