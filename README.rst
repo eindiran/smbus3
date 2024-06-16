@@ -1,24 +1,29 @@
-.. image:: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master
+
+|build-and-test| |codeql| |docs| |coverage|
+
+|versions| |package| |commits-since| |license|
+
+.. |build-and-test| image:: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml/badge.svg?branch=master
    :target: https://github.com/eindiran/smbus3/actions/workflows/python-build-and-test.yml
    :alt: Build and tests
-.. image:: https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master
+.. |codeql| image:: https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml/badge.svg?branch=master
    :target: https://github.com/eindiran/smbus3/actions/workflows/codeql-analysis.yml
    :alt: CodeQL security analysis
-.. image:: https://readthedocs.org/projects/smbus3/badge/?version=latest
+.. |docs| image:: https://readthedocs.org/projects/smbus3/badge/?version=latest
    :target: https://smbus3.readthedocs.io/en/latest/
    :alt: Documentation
-.. image:: https://raw.githubusercontent.com/eindiran/smbus3/badges/.github/badges/coverage.svg
+.. |coverage| image:: https://raw.githubusercontent.com/eindiran/smbus3/badges/.github/badges/coverage.svg
    :target: https://github.com/eindiran/smbus3/actions/workflows/coverage-master.yml
    :alt: Test coverage on master
-.. image:: https://img.shields.io/pypi/pyversions/smbus3.svg
+.. |versions| image:: https://img.shields.io/pypi/pyversions/smbus3.svg
    :alt: Python versions
-.. image:: https://img.shields.io/pypi/v/smbus3.svg
+.. |package| image:: https://img.shields.io/pypi/v/smbus3.svg
    :target: ttps://pypi.org/project/smbus3/
    :alt: PyPI package
-.. image:: https://img.shields.io/github/commits-since/eindiran/smbus3/latest.svg?color=green
+.. |commits-since| image:: https://img.shields.io/github/commits-since/eindiran/smbus3/latest.svg?color=green
    :target: https://github.com/eindiran/smbus3/releases/latest
    :alt: Commits on master since release
-.. image:: https://img.shields.io/badge/License-MIT-blue.svg
+.. |license| image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/license/MIT
    :alt: MIT
 
