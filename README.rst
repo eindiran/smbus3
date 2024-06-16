@@ -15,6 +15,9 @@
 .. image:: https://img.shields.io/pypi/v/smbus3.svg
    :target: ttps://pypi.org/project/smbus3/
    :alt: PyPI package
+.. image:: https://img.shields.io/github/commits-since/eindiran/smbus3/latest.svg?color=green
+   :target: https://github.com/eindiran/smbus3/releases/latest
+   :alt: Commits on master since release
 .. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/license/MIT
    :alt: MIT
