@@ -4,6 +4,11 @@ Changelog
 Notable changes to `smbus3 <https://github.com/eindiran/smbus3>`__ are
 recorded here.
 
+[0.5.5] - 2024-06-28
+--------------------
+
+- Enable Python3.8 support
+
 [0.5.4] - 2024-06-14
 --------------------
 

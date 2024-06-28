@@ -35,11 +35,11 @@ What is `smbus3`
 A drop-in replacement for `smbus2 <https://pypi.org/project/smbus2/>`__,
 `smbus-cffi <https://pypi.org/project/smbus-cffi/>`__, or
 `smbus-python <https://pypi.org/project/smbus/>`__ written in pure
-Python and intended for use with Python 3.9+.
+Python and intended for use with Python 3.8+.
 
 This library was forked from @kplindegaard’s excellent
 `smbus2 <https://github.com/kplindegaard/smbus2>`__. If you need a
-package that works with Python 2.7 - 3.8, smbus2 is the way to go.
+package that works with Python 2.7 - 3.7, smbus2 is the way to go.
 
 
 Introduction
@@ -89,7 +89,7 @@ Currently supported features are:
 -  ``i2c_wr()`` - single write via ``i2c_rdwr``
 -  Get i2c capabilities (``I2C_FUNCS``)
 
-It is developed for Python 3.9+.
+It is developed for Python 3.8+.
 
 More information about updates and general changes are recorded in the
 `change
