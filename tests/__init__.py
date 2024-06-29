@@ -12,7 +12,7 @@ import smbus3
 from .test_datatypes import TestDataTypes
 from .test_smbus3 import TestI2CMsg, TestI2CMsgRDWR, TestSMBus, TestSMBusWrapper
 
-__version__ = "0.5.4"
+__version__ = "0.5.5"
 __all__ = ["TestDataTypes", "TestI2CMsg", "TestI2CMsgRDWR", "TestSMBus", "TestSMBusWrapper"]
 
 
