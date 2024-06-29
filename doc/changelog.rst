@@ -7,6 +7,7 @@ recorded here.
 [0.5.5] - 2024-06-28
 --------------------
 
+- Fix Twine issues with importlib-metadata (see issue `here <https://github.com/pypa/twine/issues/1125>`__).
 - Enable Python3.8 support
 
 [0.5.4] - 2024-06-14

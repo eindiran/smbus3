@@ -6,5 +6,5 @@ pre-commit==3.7.1
 ruff==0.4.8
 setuptools==70.0.0
 sphinx==7.3.7
-twine==5.1.0
+twine==5.1.1
 wheel==0.43.0
