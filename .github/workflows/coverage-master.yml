@@ -37,7 +37,7 @@ jobs:
           echo "##[set-output name=lines;]${COVERAGE}%"
           echo "coverage=${COVERAGE}" >> "$GITHUB_OUTPUT"
       - name: Generate badge
-        uses: emibcn/badge-action@v2.0.2
+        uses: emibcn/badge-action@v2.0.3
         with:
           label: "Test coverage"
           status: ${{ steps.coverage.outputs.lines }}
