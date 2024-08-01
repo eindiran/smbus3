@@ -37,7 +37,7 @@ jobs:
         run: |
           coverage run -m unittest tests/*.py && coverage xml
       - name: Display coverage
-        uses: orgoro/coverage@v3.1
+        uses: orgoro/coverage@v3.2
         with:
           coverageFile: coverage.xml
           thresholdAll: 0.9
