@@ -4,6 +4,7 @@ smbus3 - A drop-in replacement for smbus2/smbus-cffi/smbus-python
 
 import os
 from ctypes import (
+    pointer,
     POINTER,
     Structure,
     Union,
@@ -464,7 +465,7 @@ class SMBus:
         :rtype: int
         """
         f = c_uint32()
-        ioctl(self.fd, I2C_FUNCS, f)
+        ioctl(self.fd, I2C_FUNCS, pointer(f))
         return f.value
 
     def write_quick(self, i2c_addr, force=None):
